@@ -1,427 +1,518 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-  <title>Oppo Web Simulator</title>
-  <meta name="theme-color" content="#22c55e" />
-  <style>
-    :root {
-      --bg: #0c0f14;
-      --text: #f5f7fb;
-      --muted: #b8bdca;
-      --accent: #22c55e;
-      --blur: saturate(140%) blur(12px);
-      --tile: rgba(255,255,255,0.06);
-      --tile-hover: rgba(255,255,255,0.10);
-      --panel: rgba(10,14,20,0.82);
-      --dock: rgba(18,22,28,0.75);
-    }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; margin: 0; background: #000; color: var(--text); font-family: "Noto Naskh Arabic", system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-    .wrap { display: grid; place-items: center; height: 100%; }
-    /* Phone shell */
-    .phone {
-      position: relative;
-      width: min(420px, 92vw);
-      height: min(820px, 92vh);
-      border-radius: 36px;
-      background: var(--bg);
-      overflow: hidden;
-      box-shadow: 0 40px 80px rgba(0,0,0,0.55);
-      border: 10px solid #0a0c10;
-    }
-    /* Wallpaper */
-    .wallpaper {
-      position: absolute; inset: 0;
-      background: radial-gradient(1200px 800px at 20% 10%, #1a2a6c 0%, #b21f1f 45%, #fdbb2d 100%);
-      filter: contrast(105%) saturate(115%);
-      z-index: 0;
-    }
-    .notch {
-      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-      width: 120px; height: 24px; background: rgba(0,0,0,0.65); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; z-index: 6;
-    }
-    /* Status bar */
-    .status {
-      position: absolute; top: 0; left: 0; right: 0; height: 44px; display: flex; align-items: center; justify-content: space-between;
-      padding: 0 16px; color: var(--text); z-index: 5;
-      backdrop-filter: var(--blur);
-      background: linear-gradient(to bottom, rgba(0,0,0,0.45), rgba(0,0,0,0));
-    }
-    .time { font-weight: 600; letter-spacing: 0.3px; }
-    .status-icons { display: flex; gap: 10px; align-items: center; font-size: 14px; color: var(--muted); }
-    .sig { display: inline-flex; gap: 2px; }
-    .bar { width: 3px; height: 10px; background: #7dd87d; opacity: 0.7; }
-    .bar:nth-child(2){ height: 12px; } .bar:nth-child(3){ height: 14px; } .bar:nth-child(4){ height: 16px; opacity: 1; }
-    .batt { width: 22px; height: 12px; border: 2px solid #b8bcc9; border-radius: 3px; position: relative; }
-    .batt::after { content: ""; position: absolute; right: -5px; top: 3px; width: 3px; height: 6px; background: #b8bcc9; border-radius: 2px; }
-    .batt-fill { position: absolute; left: 2px; top: 2px; bottom: 2px; width: 70%; background: #82e082; border-radius: 2px; }
-    /* Home grid */
-    .home {
-      position: absolute; inset: 0; padding: 62px 12px 96px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; z-index: 1;
-    }
-    .app {
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
-      background: var(--tile); border-radius: 18px; padding: 12px 6px; cursor: pointer; user-select: none;
-      backdrop-filter: var(--blur);
-      transition: transform .12s ease, background .12s ease, box-shadow .12s ease;
-    }
-    .app:hover { transform: translateY(-2px) scale(1.02); background: var(--tile-hover); box-shadow: 0 6px 16px rgba(0,0,0,0.25); }
-    .icon {
-      width: 52px; height: 52px; border-radius: 12px; display: grid; place-items: center; overflow: hidden;
-      box-shadow: inset 0 -8px 18px rgba(0,0,0,0.28), 0 6px 16px rgba(0,0,0,0.35);
-      background: #1b1f2a;
-    }
-    .icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .label { font-size: 12px; color: var(--text); text-align: center; max-width: 88px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
-    /* Dock */
-    .dock {
-      position: absolute; left: 12px; right: 12px; bottom: 20px; height: 72px; border-radius: 22px;
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 8px;
-      backdrop-filter: var(--blur);
-      background: var(--dock); z-index: 5;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.4);
-    }
-    .dock .app { background: rgba(255,255,255,0.10); }
-    /* Drawer button */
-    .drawer-btn {
-      position: absolute; bottom: 98px; left: 50%; transform: translateX(-50%);
-      width: 70px; height: 6px; background: rgba(255,255,255,0.35); border-radius: 999px; z-index: 5; cursor: pointer;
-    }
-    /* App drawer */
-    .drawer {
-      position: absolute; left: 0; right: 0; bottom: -100%; top: auto; height: 72%;
-      background: var(--panel); backdrop-filter: var(--blur); border-top-left-radius: 24px; border-top-right-radius: 24px;
-      box-shadow: 0 -20px 40px rgba(0,0,0,0.45); z-index: 20; transition: bottom .22s ease;
-      padding: 16px;
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
-    }
-    .drawer.open { bottom: 0; }
-    /* Quick panel */
-    .panel {
-      position: absolute; top: -72%; left: 0; right: 0; height: 72%;
-      background: var(--panel); backdrop-filter: var(--blur); border-bottom-left-radius: 24px; border-bottom-right-radius: 24px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.45); z-index: 25; transition: top .22s ease;
-      padding: 16px;
-    }
-    .panel.open { top: 0; }
-    .toggles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
-    .toggle { text-align: center; background: rgba(255,255,255,0.08); padding: 10px; border-radius: 14px; }
-    .slider { width: 100%; }
-    /* Window */
-    .window {
-      position: absolute; inset: 44px 0 0; background: rgba(8,10,14,0.86); backdrop-filter: var(--blur); z-index: 30; display: none;
-    }
-    .window.show { display: block; }
-    .win-header { height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; background: rgba(0,0,0,0.35); }
-    .win-title { font-weight: 600; }
-    .win-actions { display: flex; gap: 8px; }
-    .btn { background: rgba(255,255,255,0.08); color: var(--text); border: 0; padding: 8px 10px; border-radius: 10px; cursor: pointer; }
-    .btn:hover { background: rgba(255,255,255,0.16); }
-    .win-body { padding: 16px; color: var(--muted); line-height: 1.6; }
-    /* Ripple */
-    .ripple { position: absolute; border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); animation: ripple .5s ease forwards; background: rgba(255,255,255,0.2); }
-    @keyframes ripple { from { width: 0; height: 0; opacity: .8; } to { width: 160px; height: 160px; opacity: 0; } }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+<title>Windows Web Simulator</title>
+<meta name="theme-color" content="#2563eb" />
+<style>
+  :root{
+    --bg:#0b1220; --text:#e6eaf3; --muted:#b7c0d6; --panel:#121a2b; --accent:#2563eb;
+    --border:#1f2940; --shadow:0 24px 60px rgba(0,0,0,.45);
+    --win:#0f172a; --winHeader:#0b1220; --task:#0c1322; --hover:rgba(255,255,255,.08);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:#000;color:var(--text);font-family:Segoe UI,system-ui,-apple-system,Roboto,"Noto Kufi Arabic",sans-serif}
+  .desktop{
+    position:relative; width:100vw; height:100vh; overflow:hidden;
+    background: radial-gradient(1200px 800px at 20% 10%, #172554 0%, #0ea5e9 35%, #0f172a 85%);
+  }
+  /* wallpaper overlay toggle (theme) */
+  .desktop.theme-1{background: radial-gradient(1400px 900px at 80% 20%, #1e293b 0%, #22c55e 40%, #0f172a 90%)}
+  .desktop.theme-2{background: radial-gradient(1200px 800px at 20% 80%, #1e293b 0%, #a855f7 40%, #0f172a 90%)}
+
+  /* icons grid (desktop shortcuts) */
+  .icons{ position:absolute; inset:64px 0 64px; padding:16px; display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:12px; }
+  .icon{
+    display:flex; flex-direction:column; align-items:center; gap:8px; padding:10px; border-radius:12px; cursor:pointer; user-select:none;
+    background:transparent; transition:.12s; color:var(--text);
+  }
+  .icon:hover{ background:var(--hover) }
+  .icon .glyph{
+    width:56px; height:56px; border-radius:12px; display:grid; place-items:center; font-size:28px;
+    background:linear-gradient(135deg,#3b82f6,#1d4ed8); color:#fff; box-shadow: inset 0 -10px 18px rgba(0,0,0,.25), 0 8px 18px rgba(0,0,0,.35);
+  }
+  .icon .label{ font-size:12px; text-align:center; max-width:120px; }
+
+  /* taskbar */
+  .taskbar{
+    position:absolute; left:0; right:0; bottom:0; height:54px; background:var(--task); border-top:1px solid var(--border);
+    display:flex; align-items:center; gap:8px; padding:0 10px; box-shadow:var(--shadow); backdrop-filter:saturate(130%) blur(8px);
+  }
+  .start-btn{ display:flex; align-items:center; gap:8px; background:transparent; color:#fff; border:0; cursor:pointer; padding:8px 12px; border-radius:12px; }
+  .start-btn:hover{ background:var(--hover) }
+  .start-dot{ width:24px; height:24px; border-radius:6px; background:linear-gradient(135deg,#22c55e,#16a34a); display:inline-block }
+  .tasks{ flex:1; display:flex; gap:8px; align-items:center; overflow-x:auto; padding:6px 0 }
+  .task{ min-width:120px; max-width:220px; padding:8px 10px; border-radius:10px; background:rgba(255,255,255,.06); color:#fff; cursor:pointer; border:1px solid var(--border); display:flex; justify-content:space-between; }
+  .task.active{ outline:2px solid var(--accent) }
+  .sys{ display:flex; align-items:center; gap:10px; color:var(--muted); }
+  .clock{ font-weight:600 }
+
+  /* start menu */
+  .start{
+    position:absolute; left:10px; bottom:64px; width:340px; max-height:60vh; background:var(--panel);
+    border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow); display:none; z-index:1000;
+  }
+  .start.show{ display:block }
+  .start .search{ padding:8px; border-bottom:1px solid var(--border) }
+  .start input{ width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:#0a1020; color:#fff }
+  .start .apps{ padding:10px; display:grid; grid-template-columns:repeat(2,1fr); gap:10px }
+  .start .app{ display:flex; align-items:center; gap:8px; padding:8px; border-radius:10px; background:rgba(255,255,255,.06); cursor:pointer }
+  .start .app:hover{ background:rgba(255,255,255,.12) }
+
+  /* window */
+  .win{
+    position:absolute; top:120px; left:160px; width:640px; height:420px; background:var(--win); border:1px solid var(--border);
+    border-radius:12px; box-shadow:var(--shadow); display:flex; flex-direction:column; overflow:hidden;
+  }
+  .win.hidden{ display:none }
+  .win-header{
+    height:42px; background:var(--winHeader); border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between; padding:0 8px; cursor:move;
+  }
+  .win-title{ display:flex; align-items:center; gap:8px; font-weight:600 }
+  .win-actions{ display:flex; gap:6px }
+  .btn{ border:0; padding:6px 10px; border-radius:8px; background:rgba(255,255,255,.08); color:#fff; cursor:pointer }
+  .btn:hover{ background:rgba(255,255,255,.16) }
+  .win-body{ flex:1; padding:10px; overflow:auto; color:var(--muted) }
+  .resize{ position:absolute; right:0; bottom:0; width:14px; height:14px; cursor:nwse-resize; background:linear-gradient(135deg,transparent 50%, rgba(255,255,255,.2) 50%) }
+
+  /* context menu */
+  .ctx{ position:absolute; background:var(--panel); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow); display:none; z-index:2000; min-width:180px; }
+  .ctx.show{ display:block }
+  .ctx .item{ padding:8px 10px; cursor:pointer }
+  .ctx .item:hover{ background:rgba(255,255,255,.08) }
+
+  /* notifications */
+  .toast{
+    position:absolute; right:16px; bottom:70px; min-width:240px; max-width:340px;
+    background:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); display:none; z-index:1500;
+    padding:10px; color:var(--text)
+  }
+  .toast.show{ display:block }
+
+  /* apps content styles */
+  .explorer{ display:grid; grid-template-columns:220px 1fr; gap:10px; height:100% }
+  .explorer .side{ border-right:1px solid var(--border); padding-right:10px }
+  .explorer .item{ padding:6px 8px; border-radius:8px; cursor:pointer }
+  .explorer .item:hover{ background:rgba(255,255,255,.06) }
+  .files{ display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px }
+  .file{ border:1px solid var(--border); border-radius:10px; padding:10px; background:rgba(255,255,255,.05) }
+  .editor{ width:100%; height:100%; }
+  .editor textarea{ width:100%; height:100%; padding:10px; border:1px solid var(--border); border-radius:10px; background:#0a1020; color:#fff }
+  .browser iframe{ width:100%; height:100%; border:0; background:#0a1020 }
+  .terminal{ background:#0a1020; color:#e2e8f0; font-family:Consolas,monospace; padding:10px; border-radius:10px }
+  .terminal .prompt{ color:#22c55e }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="phone" id="phone">
-      <div class="wallpaper" id="wallpaper"></div>
-      <div class="notch"></div>
-      <div class="status">
-        <div class="time" id="time">20:30</div>
-        <div class="status-icons">
-          <span class="sig"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></span>
-          <span>4G</span>
-          <span class="batt"><span class="batt-fill" id="bFill"></span></span>
-        </div>
-      </div>
-      <div class="drawer-btn" id="drawerBtn" title="اسحب للأعلى لفتح درج التطبيقات"></div>
+<div class="desktop theme-0" id="desktop">
+  <!-- Desktop icons -->
+  <section class="icons" id="icons"></section>
 
-      <!-- Home grid: ضع الأيقونات الأصلية هنا عبر config -->
-      <main class="home" id="home"></main>
-
-      <!-- Dock -->
-      <section class="dock" id="dock"></section>
-
-      <!-- Drawer -->
-      <section class="drawer" id="drawer"></section>
-
-      <!-- Quick panel -->
-      <section class="panel" id="panel">
-        <div style="text-align:center; color:var(--muted); margin-bottom:8px">لوحة سريعة</div>
-        <div class="toggles">
-          <div class="toggle"><div>الواي فاي</div><button class="btn" data-toggle="wifi">تشغيل</button></div>
-          <div class="toggle"><div>البلوتوث</div><button class="btn" data-toggle="bt">تشغيل</button></div>
-          <div class="toggle"><div>الوضع الليلي</div><button class="btn" data-toggle="dark">تشغيل</button></div>
-          <div class="toggle"><div>البيانات</div><button class="btn" data-toggle="data">تشغيل</button></div>
-        </div>
-        <div class="toggle">
-          <div>السطوع</div>
-          <input id="brightness" class="slider" type="range" min="50" max="140" value="100" />
-        </div>
-      </section>
-
-      <!-- App window -->
-      <div class="window" id="win">
-        <div class="win-header">
-          <div class="win-title" id="winTitle">تطبيق</div>
-          <div class="win-actions">
-            <button class="btn" id="backBtn">رجوع</button>
-            <button class="btn" id="homeBtn">الرئيسية</button>
-          </div>
-        </div>
-        <div class="win-body" id="winBody">
-          هذا تطبيق وهمي داخل المحاكي. يمكنك تخصيص المحتوى لكل تطبيق بسهولة.
-        </div>
-      </div>
-    </div>
+  <!-- Start menu -->
+  <div class="start" id="start">
+    <div class="search"><input id="startSearch" placeholder="ابحث عن تطبيق أو ملف" /></div>
+    <div class="apps" id="startApps"></div>
   </div>
 
-  <script>
-    /* =======================
-       1) CONFIG — غيّر الروابط هنا لتطابق واجهة OPPO بالظبط
-       ======================= */
-    const CONFIG = {
-      wallpaperURL: "", // ضع رابط خلفية Oppo الأصلية هنا (PNG/JPG)
-      // أيقونات ColorOS (ضع روابط صور مربعة 512x512 إن أمكن)
-      icons: {
-        "الهاتف": "",         // phone
-        "الرسائل": "",        // messages
-        "المعرض": "",         // photos
-        "الإعدادات": "",      // settings
-        "المتصفح": "",        // browser
-        "الساعة": "",         // clock
-        "الكاميرا": "",       // camera
-        "الملاحظات": "",      // notes
-        "الطقس": "",          // weather
-        "الموسيقى": "",       // music
-        "الملفات": "",        // files
-        "الحاسبة": "",        // calculator
-        "متجر التطبيقات": "",  // app market
-        "مدير الهاتف": ""     // phone manager
-      },
-      homeOrder: [
-        "متجر التطبيقات","الساعة","الطقس","الملفات",
-        "الإعدادات","المعرض","الملاحظات","الموسيقى",
-        "الحاسبة","الكاميرا","المتصفح","مدير الهاتف"
-      ],
-      dockOrder: ["الهاتف","الرسائل","المتصفح","الكاميرا"],
-      drawerOrder: [
-        "الهاتف","الرسائل","المعرض","الإعدادات",
-        "المتصفح","الساعة","الكاميرا","الملاحظات",
-        "الطقس","الموسيقى","الملفات","الحاسبة","متجر التطبيقات","مدير الهاتف"
-      ],
-      // أيقونة PWA للشاشة الرئيسية
-      pwaIconURL: "", // ضع هنا رابط أيقونة أنيقة 512x512 لتطبيقك
-      name: "Oppo Web Simulator",
-      short_name: "OppoSim",
-      theme_color: "#22c55e",
-      background_color: "#0c0f14"
+  <!-- Taskbar -->
+  <footer class="taskbar">
+    <button class="start-btn" id="startBtn"><span class="start-dot"></span><span>ابدأ</span></button>
+    <div class="tasks" id="tasks"></div>
+    <div class="sys">
+      <span id="net">Wi‑Fi</span>
+      <span class="clock" id="clock">00:00</span>
+    </div>
+  </footer>
+
+  <!-- Context menu -->
+  <div class="ctx" id="ctx">
+    <div class="item" data-cmd="new-note">مذكرة جديدة</div>
+    <div class="item" data-cmd="new-window">نافذة فارغة</div>
+    <div class="item" data-cmd="theme">تغيير الخلفية</div>
+    <div class="item" data-cmd="settings">الإعدادات</div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* =========================
+   CONFIG
+   ========================= */
+const APPS = [
+  { id:'explorer', name:'المستكشف', glyph:'📁' },
+  { id:'notepad',  name:'المفكرة',  glyph:'📝' },
+  { id:'browser',  name:'المتصفح',  glyph:'🌐' },
+  { id:'terminal', name:'الطرفية',  glyph:'>_' },
+  { id:'settings', name:'الإعدادات', glyph:'⚙️' },
+];
+const DESKTOP_SHORTCUTS = [
+  { id:'explorer' }, { id:'notepad' }, { id:'browser' }, { id:'terminal' }, { id:'settings' }
+];
+
+/* =========================
+   STATE
+   ========================= */
+let zCounter = 10;
+const windows = new Map(); // id -> dom
+const tasks = new Map();   // id -> task button
+let themeIndex = Number(localStorage.getItem('themeIndex') || 0);
+
+/* =========================
+   UTIL
+   ========================= */
+const desk = document.getElementById('desktop');
+const iconsEl = document.getElementById('icons');
+const startEl = document.getElementById('start');
+const startBtn = document.getElementById('startBtn');
+const startApps = document.getElementById('startApps');
+const startSearch = document.getElementById('startSearch');
+const tasksEl = document.getElementById('tasks');
+const clockEl = document.getElementById('clock');
+const ctxEl = document.getElementById('ctx');
+const toastEl = document.getElementById('toast');
+
+function clockTick(){
+  const d=new Date(); const h=d.getHours().toString().padStart(2,'0'); const m=d.getMinutes().toString().padStart(2,'0');
+  clockEl.textContent = `${h}:${m}`;
+}
+setInterval(clockTick, 1000); clockTick();
+
+/* =========================
+   DESKTOP & START MENU
+   ========================= */
+function buildDesktopShortcuts(){
+  iconsEl.innerHTML='';
+  DESKTOP_SHORTCUTS.forEach(s=>{
+    const a = APPS.find(x=>x.id===s.id);
+    const div = document.createElement('div');
+    div.className='icon';
+    div.dataset.app=a.id;
+    div.innerHTML = `<div class="glyph">${a.glyph}</div><div class="label">${a.name}</div>`;
+    div.addEventListener('dblclick', ()=>openApp(a.id));
+    iconsEl.appendChild(div);
+  });
+}
+function buildStartMenu(){
+  startApps.innerHTML='';
+  APPS.forEach(a=>{
+    const row = document.createElement('div');
+    row.className='app';
+    row.dataset.app=a.id;
+    row.innerHTML = `<span class="glyph" style="width:28px;height:28px;border-radius:6px;display:grid;place-items:center;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff">${a.glyph}</span><span>${a.name}</span>`;
+    row.addEventListener('click', ()=>{ openApp(a.id); toggleStart(false); });
+    startApps.appendChild(row);
+  });
+}
+function toggleStart(show){
+  startEl.classList.toggle('show', show ?? !startEl.classList.contains('show'));
+}
+startBtn.addEventListener('click', ()=>toggleStart());
+desk.addEventListener('click', (e)=>{
+  if (!startEl.contains(e.target) && !startBtn.contains(e.target)) toggleStart(false);
+  if (!ctxEl.contains(e.target)) ctxEl.classList.remove('show');
+});
+startSearch.addEventListener('input', ()=>{
+  const q = startSearch.value.trim();
+  [...startApps.children].forEach(el=>{
+    const name = el.textContent.toLowerCase();
+    el.style.display = name.includes(q.toLowerCase())?'flex':'none';
+  });
+});
+
+/* =========================
+   WINDOWS & TASKS
+   ========================= */
+function openApp(id){
+  const app = APPS.find(x=>x.id===id);
+  if (!app) return;
+  let win = windows.get(id);
+  if (!win){
+    win = createWindow(app);
+    windows.set(id, win);
+    const t = createTask(app);
+    tasks.set(id, t);
+  }
+  focusWindow(win);
+}
+function createTask(app){
+  const t = document.createElement('button');
+  t.className='task';
+  t.dataset.app=app.id;
+  t.innerHTML = `<span>${app.name}</span><span>■</span>`;
+  t.onclick = ()=>openApp(app.id);
+  tasksEl.appendChild(t);
+  return t;
+}
+function focusWindow(win){
+  document.querySelectorAll('.win').forEach(w=>w.classList.remove('active'));
+  win.style.zIndex = ++zCounter;
+  const task = tasks.get(win.dataset.app);
+  document.querySelectorAll('.task').forEach(t=>t.classList.remove('active'));
+  if (task) task.classList.add('active');
+  win.classList.remove('hidden');
+}
+function createWindow(app){
+  const w = document.createElement('div');
+  w.className='win';
+  w.dataset.app=app.id;
+  w.style.top = (120 + Math.random()*60)+'px';
+  w.style.left = (160 + Math.random()*120)+'px';
+
+  const header = document.createElement('div');
+  header.className='win-header';
+  header.innerHTML = `<div class="win-title"><span style="width:22px;height:22px;border-radius:6px;display:grid;place-items:center;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff">${app.glyph}</span>${app.name}</div>
+  <div class="win-actions">
+    <button class="btn" data-act="min">تصغير</button>
+    <button class="btn" data-act="max">تكبير</button>
+    <button class="btn" data-act="close">إغلاق</button>
+  </div>`;
+  const body = document.createElement('div'); body.className='win-body'; body.appendChild(renderApp(app.id));
+  const res = document.createElement('div'); res.className='resize';
+
+  w.appendChild(header); w.appendChild(body); w.appendChild(res);
+  desk.appendChild(w);
+
+  // drag
+  let dx=0, dy=0, dragging=false;
+  header.addEventListener('mousedown', e=>{ dragging=true; dx=e.clientX - w.offsetLeft; dy=e.clientY - w.offsetTop; });
+  window.addEventListener('mousemove', e=>{ if(dragging){ w.style.left = (e.clientX - dx)+'px'; w.style.top = (e.clientY - dy)+'px'; } });
+  window.addEventListener('mouseup', ()=>dragging=false);
+
+  // resize
+  let rs=false, sx=0, sy=0, sw=0, sh=0;
+  res.addEventListener('mousedown', e=>{ rs=true; sx=e.clientX; sy=e.clientY; sw=w.offsetWidth; sh=w.offsetHeight; e.preventDefault(); });
+  window.addEventListener('mousemove', e=>{ if(rs){ w.style.width = Math.max(360, sw + (e.clientX - sx))+'px'; w.style.height = Math.max(240, sh + (e.clientY - sy))+'px'; } });
+  window.addEventListener('mouseup', ()=>rs=false);
+
+  // actions
+  header.querySelectorAll('.btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const act=b.dataset.act;
+      if (act==='close'){ w.classList.add('hidden'); const t=tasks.get(app.id); if(t) t.remove(); tasks.delete(app.id); windows.delete(app.id); }
+      if (act==='min'){ w.classList.add('hidden'); const t=tasks.get(app.id); if(t) t.classList.remove('active'); }
+      if (act==='max'){ w.style.top='64px'; w.style.left='20px'; w.style.width='calc(100vw - 40px)'; w.style.height='calc(100vh - 120px)'; focusWindow(w); }
+    });
+  });
+
+  // focus on click
+  w.addEventListener('mousedown', ()=>focusWindow(w));
+  return w;
+}
+
+/* =========================
+   APPS RENDERERS
+   ========================= */
+function renderApp(id){
+  if (id==='explorer'){
+    const wrap = document.createElement('div'); wrap.className='explorer';
+    const side = document.createElement('div'); side.className='side';
+    side.innerHTML = `<div class="item" data-path="Desktop">سطح المكتب</div>
+                      <div class="item" data-path="Documents">مستندات</div>
+                      <div class="item" data-path="Downloads">تنزيلات</div>`;
+    const main = document.createElement('div'); main.className='files';
+    wrap.appendChild(side); wrap.appendChild(main);
+
+    const filesDB = JSON.parse(localStorage.getItem('filesDB')||'{}');
+    function list(path){
+      main.innerHTML='';
+      const items = filesDB[path] || sampleFiles(path);
+      items.forEach(f=>{
+        const div = document.createElement('div'); div.className='file';
+        div.innerHTML = `<div style="font-weight:600">${f.name}</div><div style="font-size:12px;color:var(--muted)">${f.type} • ${f.size}</div>`;
+        div.addEventListener('dblclick', ()=>{
+          if (f.app) openApp(f.app);
+        });
+        main.appendChild(div);
+      });
+    }
+    function sampleFiles(path){
+      const samples={
+        Desktop:[{name:'مفكرة.txt',type:'Text',size:'2 KB',app:'notepad'},{name:'تعليمات.html',type:'HTML',size:'4 KB',app:'browser'}],
+        Documents:[{name:'مشروع.md',type:'Markdown',size:'3 KB',app:'notepad'}],
+        Downloads:[{name:'index.html',type:'HTML',size:'6 KB',app:'browser'}]
+      }; return samples[path]||[];
+    }
+    side.querySelectorAll('.item').forEach(el=>el.addEventListener('click', ()=>list(el.dataset.path)));
+    list('Desktop');
+    return wrap;
+  }
+
+  if (id==='notepad'){
+    const wrap = document.createElement('div'); wrap.className='editor';
+    wrap.innerHTML = `<div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="btn" id="noteSave">حفظ</button>
+      <button class="btn" id="noteLoad">تحميل</button>
+      <button class="btn" id="noteNew">جديد</button>
+    </div>
+    <textarea id="noteArea" placeholder="اكتب هنا..."></textarea>`;
+    const area = wrap.querySelector('#noteArea');
+    wrap.querySelector('#noteSave').onclick = ()=>{ localStorage.setItem('notepad', area.value); toast('تم الحفظ'); };
+    wrap.querySelector('#noteLoad').onclick = ()=>{ area.value = localStorage.getItem('notepad')||''; toast('تم التحميل'); };
+    wrap.querySelector('#noteNew').onclick = ()=>{ area.value=''; };
+    return wrap;
+  }
+
+  if (id==='browser'){
+    const wrap = document.createElement('div'); wrap.className='browser';
+    wrap.innerHTML = `<div style="display:flex;gap:8px;margin-bottom:8px">
+      <input id="url" placeholder="https://example.com" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:#0a1020;color:#fff">
+      <button class="btn" id="go">اذهب</button>
+    </div><iframe id="frame" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>`;
+    const url = wrap.querySelector('#url'); const frame = wrap.querySelector('#frame');
+    wrap.querySelector('#go').onclick = ()=>{
+      const u = url.value.trim(); if(!u) return;
+      frame.src = u.startsWith('http')?u:('https://'+u);
     };
+    return wrap;
+  }
 
-    /* =======================
-       2) UI Setup
-       ======================= */
-    const timeEl = document.getElementById('time');
-    const bFill = document.getElementById('bFill');
-    const wallpaper = document.getElementById('wallpaper');
-    const home = document.getElementById('home');
-    const dock = document.getElementById('dock');
-    const drawer = document.getElementById('drawer');
-    const panel = document.getElementById('panel');
-    const drawerBtn = document.getElementById('drawerBtn');
-    const phone = document.getElementById('phone');
-    const win = document.getElementById('win');
-    const winTitle = document.getElementById('winTitle');
-    const winBody = document.getElementById('winBody');
-
-    function updateTime() {
-      const d = new Date();
-      const h = d.getHours().toString().padStart(2,'0');
-      const m = d.getMinutes().toString().padStart(2,'0');
-      timeEl.textContent = `${h}:${m}`;
-    }
-    setInterval(updateTime, 1000); updateTime();
-    let batt = 70; setInterval(() => { batt = Math.max(12, Math.min(100, batt + (Math.random()*6 - 3))); bFill.style.width = batt + '%'; }, 2000);
-
-    // Wallpaper
-    if (CONFIG.wallpaperURL) {
-      wallpaper.style.background = `url('${CONFIG.wallpaperURL}') center / cover no-repeat`;
-      wallpaper.style.filter = 'none';
-    }
-
-    // Build app tiles
-    function tile(name) {
-      const div = document.createElement('div');
-      div.className = 'app';
-      div.dataset.app = name;
-      const icon = document.createElement('div');
-      icon.className = 'icon';
-      if (CONFIG.icons[name]) {
-        const img = document.createElement('img');
-        img.src = CONFIG.icons[name];
-        img.alt = name;
-        icon.appendChild(img);
-      } else {
-        icon.style.background = 'linear-gradient(135deg, #34e89e, #0f3443)';
+  if (id==='terminal'){
+    const wrap = document.createElement('div'); wrap.className='terminal';
+    wrap.innerHTML = `<div>Terminal — اكتب أمرًا ثم اضغط Enter</div>
+      <div id="out" style="margin:8px 0;white-space:pre-wrap"></div>
+      <div><span class="prompt">C:\\></span> <input id="cmd" style="width:80%;background:#0a1020;border:1px solid var(--border);color:#fff;padding:6px;border-radius:8px"></div>`;
+    const out = wrap.querySelector('#out'); const cmd = wrap.querySelector('#cmd');
+    const cmds = {
+      help: ()=>"الأوامر: help, echo <text>, date, ls, clear, theme <0|1|2>",
+      echo: (args)=>args.join(' '),
+      date: ()=>new Date().toString(),
+      ls: ()=>"Desktop Documents Downloads",
+      clear: ()=>{ out.textContent=''; return ''; },
+      theme: (args)=>{ const n=Number(args[0]||0); setTheme(n); return 'تم تغيير الخلفية إلى '+n; }
+    };
+    cmd.addEventListener('keydown', e=>{
+      if (e.key==='Enter'){
+        const parts = cmd.value.trim().split(/\s+/); const name=parts.shift().toLowerCase();
+        const fn = cmds[name]; let res='';
+        if (fn) res = fn(parts)||'';
+        else res = 'أمر غير معروف: '+name;
+        out.textContent += `\n$ ${cmd.value}\n${res}`;
+        cmd.value='';
       }
-      const label = document.createElement('div');
-      label.className = 'label';
-      label.textContent = name;
-      div.appendChild(icon);
-      div.appendChild(label);
-      div.addEventListener('click', openApp);
-      return div;
-    }
-    function fillGrid(container, orderArr) {
-      container.innerHTML = '';
-      orderArr.forEach(n => container.appendChild(tile(n)));
-    }
-    fillGrid(home, CONFIG.homeOrder);
-    fillGrid(dock, CONFIG.dockOrder);
-    fillGrid(drawer, CONFIG.drawerOrder);
-
-    // Drawer & panel toggles
-    drawerBtn.addEventListener('click', () => drawer.classList.toggle('open'));
-    let startY = null;
-    phone.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, {passive:true});
-    phone.addEventListener('touchend', () => { startY = null; }, {passive:true});
-    phone.addEventListener('touchmove', e => {
-      if (startY == null) return;
-      const dy = e.touches[0].clientY - startY;
-      if (dy > 50) { panel.classList.add('open'); drawer.classList.remove('open'); } // swipe down
-      if (dy < -50) { drawer.classList.add('open'); panel.classList.remove('open'); } // swipe up
-    }, {passive:true});
-    // Mouse shortcuts
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') { panel.classList.remove('open'); drawer.classList.remove('open'); }
-      if (e.key === ' ') { drawer.classList.toggle('open'); }
-      if (e.key.toLowerCase() === 'n') { panel.classList.toggle('open'); }
     });
+    return wrap;
+  }
 
-    // Brightness slider
-    document.getElementById('brightness').addEventListener('input', e => {
-      const v = e.target.value;
-      wallpaper.style.filter = `brightness(${v}%) contrast(105%) saturate(115%)`;
+  if (id==='settings'){
+    const wrap = document.createElement('div'); wrap.style.padding='6px';
+    wrap.innerHTML = `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+      <div class="file"><div style="font-weight:600">السِمة</div>
+        <div style="margin-top:6px;display:flex;gap:8px">
+          <button class="btn" data-theme="0">افتراضي</button>
+          <button class="btn" data-theme="1">أخضر</button>
+          <button class="btn" data-theme="2">بنفسجي</button>
+        </div>
+      </div>
+      <div class="file"><div style="font-weight:600">إشعارات</div>
+        <div style="margin-top:6px"><button class="btn" id="notify">إظهار إشعار</button></div>
+      </div>
+      <div class="file"><div style="font-weight:600">حول</div>
+        <div style="margin-top:6px;color:var(--muted)">Windows Web Simulator — ملف واحد، PWA، نوافذ متعددة، حفظ محلي.</div>
+      </div>
+    </div>`;
+    wrap.querySelectorAll('[data-theme]').forEach(b=>{
+      b.onclick = ()=> setTheme(Number(b.dataset.theme));
     });
+    wrap.querySelector('#notify').onclick = ()=>toast('هذا إشعار تجريبي 🎉');
+    return wrap;
+  }
 
-    // Open fake app window
-    function openApp(ev) {
-      ripple(ev);
-      const name = ev.currentTarget.dataset.app || 'تطبيق';
-      winTitle.textContent = name;
-      winBody.innerHTML = getAppContent(name);
-      win.classList.add('show');
-      drawer.classList.remove('open');
-      panel.classList.remove('open');
-    }
-    document.getElementById('homeBtn').addEventListener('click', () => win.classList.remove('show'));
-    document.getElementById('backBtn').addEventListener('click', () => win.classList.remove('show'));
+  // fallback
+  const div = document.createElement('div'); div.textContent='تطبيق غير معروف'; return div;
+}
 
-    function getAppContent(name) {
-      const map = {
-        'الهاتف': 'واجهة الاتصال — أرقام سريعة، سجل المكالمات، وجهة وهمية.',
-        'الرسائل': 'صندوق رسائل بسيط — محادثات تجريبية قابلة للتعديل.',
-        'المعرض': 'شبكة صور وهمية — استبدلها لاحقًا بصور حقيقية.',
-        'الإعدادات': 'تبديل الوضع الليلي، السطوع، اللغة، الشبكات — محاكاة.',
-        'المتصفح': '<b>متصفح وهمي:</b> أدخل عنوان URL لعرضه داخل iframe.',
-        'الساعة': 'ساعة رقمية + منبهات وهمية.',
-        'الكاميرا': 'معاينة كاميرا الويب (getUserMedia) يمكن تفعيلها لاحقًا.',
-        'الملاحظات': 'قائمة ملاحظات تُحفظ في localStorage.',
-        'الطقس': 'طقس تجريبي بأرقام ثابتة.',
-        'الموسيقى': 'مشغل بسيط لأصوات تجريبية.',
-        'الملفات': 'مدير ملفات وهمي.',
-        'الحاسبة': '<input id="calc" placeholder="3+4*2" style="width:100%;padding:10px;border-radius:10px;background:rgba(255,255,255,0.06);color:#fff"><div id="calcOut" style="margin-top:10px"></div>',
-        'متجر التطبيقات': 'سوق وهمي لعرض تطبيقاتك التجريبية.',
-        'مدير الهاتف': 'تنظيف ملفات مؤقتة، إدارة تطبيقات — محاكاة.'
-      };
-      setTimeout(() => {
-        const inp = document.getElementById('calc');
-        if (inp) {
-          inp.addEventListener('keydown', e => {
-            if (e.key === 'Enter') {
-              try { document.getElementById('calcOut').textContent = eval(inp.value); }
-              catch { document.getElementById('calcOut').textContent = 'صيغة غير صحيحة'; }
-            }
-          });
+/* =========================
+   CONTEXT MENU & TOAST
+   ========================= */
+desk.addEventListener('contextmenu', e=>{
+  e.preventDefault();
+  ctxEl.style.left = e.clientX+'px';
+  ctxEl.style.top  = e.clientY+'px';
+  ctxEl.classList.add('show');
+});
+ctxEl.addEventListener('click', e=>{
+  const cmd = e.target.dataset.cmd;
+  ctxEl.classList.remove('show');
+  if (cmd==='new-note') openApp('notepad');
+  if (cmd==='new-window'){
+    const id='blank-'+Math.random().toString(36).slice(2);
+    APPS.push({id,name:'نافذة',glyph:'🪟'}); // temp
+    openApp(id); // create dummy window
+  }
+  if (cmd==='theme') setTheme((themeIndex+1)%3);
+  if (cmd==='settings') openApp('settings');
+});
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(()=>toastEl.classList.remove('show'), 2500);
+}
+
+/* =========================
+   THEMES
+   ========================= */
+function setTheme(i){
+  themeIndex = i;
+  desk.className = 'desktop theme-'+i;
+  localStorage.setItem('themeIndex', i);
+}
+
+/* =========================
+   INIT
+   ========================= */
+buildDesktopShortcuts();
+buildStartMenu();
+setTheme(themeIndex);
+
+/* =========================
+   PWA — Manifest & Service Worker (inline)
+   ========================= */
+const manifest = {
+  name: "Windows Web Simulator",
+  short_name: "WinSim",
+  start_url: "./index.html",
+  display: "standalone",
+  background_color: "#0b1220",
+  theme_color: "#2563eb",
+  icons: [{
+    src: "data:image/svg+xml;base64,"+btoa('<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\"><rect width=\"256\" height=\"256\" rx=\"48\" fill=\"#2563eb\"/><g fill=\"#fff\"><rect x=\"24\" y=\"24\" width=\"104\" height=\"104\"/><rect x=\"136\" y=\"24\" width=\"96\" height=\"104\"/><rect x=\"24\" y=\"136\" width=\"104\" height=\"96\"/><rect x=\"136\" y=\"136\" width=\"96\" height=\"96\"/></g></svg>'),
+    sizes: "256x256",
+    type: "image/svg+xml",
+    purpose: "any maskable"
+  }]
+};
+const manifestURL = URL.createObjectURL(new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'}));
+const linkManifest = document.createElement('link'); linkManifest.rel='manifest'; linkManifest.href=manifestURL; document.head.appendChild(linkManifest);
+
+const swCode = `
+  const CACHE='winsim-v1';
+  const ASSETS=['./','./index.html'];
+  self.addEventListener('install',e=>{
+    e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
+  });
+  self.addEventListener('activate',e=>{
+    e.waitUntil(caches.keys().then(keys=>Promise.all(keys.map(k=>k!==CACHE&&caches.delete(k)))));
+    self.clients.claim();
+  });
+  self.addEventListener('fetch',e=>{
+    if(e.request.method!=='GET') return;
+    const url = new URL(e.request.url);
+    e.respondWith(
+      caches.match(e.request).then(res=>res||fetch(e.request).then(net=>{
+        if(url.origin===self.location.origin){
+          const clone=net.clone(); caches.open(CACHE).then(c=>c.put(e.request, clone));
         }
-      }, 50);
-      return map[name] || 'تطبيق تجريبي.';
-    }
-
-    // Ripple
-    function ripple(e) {
-      const r = document.createElement('span');
-      r.className = 'ripple';
-      r.style.left = e.clientX + 'px';
-      r.style.top = e.clientY + 'px';
-      document.body.appendChild(r);
-      setTimeout(() => r.remove(), 500);
-    }
-
-    /* =======================
-       3) PWA — Manifest & SW في نفس الملف
-       ======================= */
-    // Create manifest as Blob and attach <link rel="manifest">
-    const manifest = {
-      name: CONFIG.name,
-      short_name: CONFIG.short_name,
-      start_url: "./index.html",
-      display: "standalone",
-      background_color: CONFIG.background_color,
-      theme_color: CONFIG.theme_color,
-      icons: CONFIG.pwaIconURL ? [{
-        src: CONFIG.pwaIconURL,
-        sizes: "192x192",
-        type: "image/png"
-      }, {
-        src: CONFIG.pwaIconURL,
-        sizes: "512x512",
-        type: "image/png"
-      }] : []
-    };
-    const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
-    const manifestURL = URL.createObjectURL(manifestBlob);
-    const linkManifest = document.createElement('link');
-    linkManifest.rel = 'manifest';
-    linkManifest.href = manifestURL;
-    document.head.appendChild(linkManifest);
-
-    // Inline Service Worker via Blob (cache basic shell)
-    const swCode = `
-      const CACHE = 'oppo-sim-v1';
-      const ASSETS = ['.', './index.html'];
-      self.addEventListener('install', e => {
-        e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
-      });
-      self.addEventListener('activate', e => {
-        e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => k !== CACHE && caches.delete(k)))));
-        self.clients.claim();
-      });
-      self.addEventListener('fetch', e => {
-        const url = new URL(e.request.url);
-        if (e.request.method === 'GET') {
-          e.respondWith(
-            caches.match(e.request).then(res => res || fetch(e.request).then(net => {
-              // Cache same-origin requests
-              if (url.origin === self.location.origin) {
-                const clone = net.clone();
-                caches.open(CACHE).then(c => c.put(e.request, clone));
-              }
-              return net;
-            }).catch(() => caches.match('./index.html')))
-          );
-        }
-      });
-    `;
-    const swBlob = new Blob([swCode], {type: 'application/javascript'});
-    const swURL = URL.createObjectURL(swBlob);
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register(swURL);
-    }
-  </script>
+        return net;
+      }).catch(()=>caches.match('./index.html')))
+    );
+  });
+`;
+const swURL = URL.createObjectURL(new Blob([swCode], {type:'application/javascript'}));
+if ('serviceWorker' in navigator){ navigator.serviceWorker.register(swURL); }
+</script>
 </body>
 </html>
