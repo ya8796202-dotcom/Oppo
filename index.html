@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>Oppo Web Simulator</title>
+  <style>
+    :root {
+      --bg: #0c0f14;
+      --glass: rgba(255,255,255,0.08);
+      --text: #f5f7fb;
+      --muted: #c7cbd6;
+      --accent: #28c76f;
+      --danger: #ff4d4f;
+      --dock: rgba(20,24,32,0.65);
+      --blur: saturate(140%) blur(12px);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; background: #000; color: var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Kufi Arabic", sans-serif; }
+    /* Phone shell */
+    .phone {
+      position: relative;
+      margin: 0 auto;
+      width: min(420px, 92vw);
+      height: min(800px, 92vh);
+      border-radius: 36px;
+      background: var(--bg) center / cover no-repeat;
+      overflow: hidden;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+      border: 10px solid #0a0c10;
+    }
+    /* Wallpaper */
+    .wallpaper {
+      position: absolute; inset: 0;
+      background: radial-gradient(1200px 800px at 20% 10%, #1a2a6c 0%, #b21f1f 45%, #fdbb2d 100%);
+      filter: contrast(105%) saturate(115%);
+      z-index: 0;
+    }
+    /* Status bar */
+    .status {
+      position: absolute; top: 0; left: 0; right: 0; height: 44px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px; color: var(--text); z-index: 5;
+      backdrop-filter: var(--blur);
+      background: linear-gradient(to bottom, rgba(0,0,0,0.45), rgba(0,0,0,0));
+    }
+    .time { font-weight: 600; letter-spacing: 0.3px; }
+    .status-icons { display: flex; gap: 10px; align-items: center; font-size: 14px; color: var(--muted); }
+    .sig { display: inline-flex; gap: 2px; }
+    .bar { width: 3px; height: 10px; background: #7dd87d; opacity: 0.7; }
+    .bar:nth-child(2){ height: 12px; } .bar:nth-child(3){ height: 14px; } .bar:nth-child(4){ height: 16px; opacity: 1; }
+    .batt { width: 22px; height: 12px; border: 2px solid #b8bcc9; border-radius: 3px; position: relative; }
+    .batt::after { content: ""; position: absolute; right: -5px; top: 3px; width: 3px; height: 6px; background: #b8bcc9; border-radius: 2px; }
+    .batt-fill { position: absolute; left: 2px; top: 2px; bottom: 2px; width: 60%; background: #82e082; border-radius: 2px; }
+    /* Notification shade button */
+    .notif-pull {
+      position: absolute; top: 52px; left: 50%; transform: translateX(-50%);
+      width: 56px; height: 5px; background: rgba(255,255,255,0.35); border-radius: 999px; z-index: 5;
+    }
+    /* Home grid */
+    .home {
+      position: absolute; inset: 0; padding: 62px 12px 96px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; z-index: 1;
+    }
+    .app {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+      background: rgba(255,255,255,0.05); border-radius: 18px; padding: 12px 6px; cursor: pointer; user-select: none;
+      backdrop-filter: var(--blur);
+      transition: transform .12s ease, background .12s ease, box-shadow .12s ease;
+    }
+    .app:hover { transform: translateY(-2px) scale(1.02); background: rgba(255,255,255,0.08); box-shadow: 0 6px 16px rgba(0,0,0,0.25); }
+    .icon {
+      width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; color: #fff; font-size: 22px; font-weight: 700;
+      box-shadow: inset 0 -8px 18px rgba(0,0,0,0.3), 0 6px 16px rgba(0,0,0,0.35);
+    }
+    .label { font-size: 12px; color: var(--text); text-align: center; max-width: 80px; }
+    /* Icon themes */
+    .i-green { background: linear-gradient(135deg, #34e89e, #0f3443); }
+    .i-blue { background: linear-gradient(135deg, #396afc, #2948ff); }
+    .i-red { background: linear-gradient(135deg, #ff512f, #dd2476); }
+    .i-yellow { background: linear-gradient(135deg, #f6d365, #fda085); color: #252525; }
+    .i-purple { background: linear-gradient(135deg, #833ab4, #5b2a86); }
+    .i-cyan { background: linear-gradient(135deg, #00c6ff, #0072ff); }
+    /* Dock */
+    .dock {
+      position: absolute; left: 12px; right: 12px; bottom: 20px; height: 68px; border-radius: 22px;
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 8px;
+      backdrop-filter: var(--blur);
+      background: var(--dock); z-index: 5;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+    }
+    .dock .app { background: rgba(255,255,255,0.08); }
+    /* App drawer button */
+    .drawer-btn {
+      position: absolute; bottom: 96px; left: 50%; transform: translateX(-50%);
+      width: 70px; height: 6px; background: rgba(255,255,255,0.35); border-radius: 999px; z-index: 5; cursor: pointer;
+    }
+    /* App drawer */
+    .drawer {
+      position: absolute; left: 0; right: 0; bottom: -100%; top: auto; height: 70%;
+      background: rgba(10,14,20,0.8); backdrop-filter: var(--blur); border-top-left-radius: 24px; border-top-right-radius: 24px;
+      box-shadow: 0 -20px 40px rgba(0,0,0,0.45); z-index: 20; transition: bottom .22s ease;
+      padding: 16px;
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    }
+    .drawer.open { bottom: 0; }
+    /* Fake app window */
+    .window {
+      position: absolute; inset: 44px 0 0; background: rgba(8,10,14,0.85); backdrop-filter: var(--blur); z-index: 30; display: none;
+    }
+    .window.show { display: block; }
+    .win-header { height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; background: rgba(0,0,0,0.35); }
+    .win-title { font-weight: 600; }
+    .win-actions { display: flex; gap: 8px; }
+    .btn { background: rgba(255,255,255,0.08); color: var(--text); border: 0; padding: 8px 10px; border-radius: 10px; cursor: pointer; }
+    .btn:hover { background: rgba(255,255,255,0.16); }
+    .win-body { padding: 16px; color: var(--muted); line-height: 1.6; }
+    /* Quick panel (notifications) */
+    .panel {
+      position: absolute; top: -70%; left: 0; right: 0; height: 70%;
+      background: rgba(12,16,22,0.92); backdrop-filter: var(--blur); border-bottom-left-radius: 24px; border-bottom-right-radius: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.45); z-index: 25; transition: top .22s ease;
+      padding: 16px;
+    }
+    .panel.open { top: 0; }
+    .toggles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+    .toggle { text-align: center; background: rgba(255,255,255,0.06); padding: 10px; border-radius: 14px; }
+    .slider { width: 100%; }
+    /* Simple tap ripple */
+    .ripple { position: absolute; border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); animation: ripple .5s ease forwards; background: rgba(255,255,255,0.2); }
+    @keyframes ripple { from { width: 0; height: 0; opacity: .8; } to { width: 160px; height: 160px; opacity: 0; } }
+  </style>
+</head>
+<body>
+  <div class="phone" id="phone">
+    <div class="wallpaper"></div>
+
+    <div class="status">
+      <div class="time" id="time">20:30</div>
+      <div class="status-icons">
+        <span class="sig"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></span>
+        <span>4G</span>
+        <span class="batt"><span class="batt-fill" id="bFill"></span></span>
+      </div>
+    </div>
+    <div class="notif-pull" id="notifPull" title="اسحب لأسفل لفتح اللوحة"></div>
+
+    <main class="home" id="home">
+      <!-- بعض التطبيقات الشائعة -->
+      <div class="app" data-app="الهاتف"><div class="icon i-green">📞</div><div class="label">الهاتف</div></div>
+      <div class="app" data-app="الرسائل"><div class="icon i-blue">💬</div><div class="label">الرسائل</div></div>
+      <div class="app" data-app="المعرض"><div class="icon i-purple">🖼️</div><div class="label">المعرض</div></div>
+      <div class="app" data-app="الإعدادات"><div class="icon i-yellow">⚙️</div><div class="label">الإعدادات</div></div>
+      <div class="app" data-app="المتصفح"><div class="icon i-cyan">🌐</div><div class="label">المتصفح</div></div>
+      <div class="app" data-app="الساعة"><div class="icon i-green">⏰</div><div class="label">الساعة</div></div>
+      <div class="app" data-app="الكاميرا"><div class="icon i-red">📷</div><div class="label">الكاميرا</div></div>
+      <div class="app" data-app="الملاحظات"><div class="icon i-purple">📝</div><div class="label">الملاحظات</div></div>
+      <div class="app" data-app="الطقس"><div class="icon i-blue">☀️</div><div class="label">الطقس</div></div>
+      <div class="app" data-app="الموسيقى"><div class="icon i-red">🎵</div><div class="label">الموسيقى</div></div>
+      <div class="app" data-app="الملفات"><div class="icon i-yellow">🗂️</div><div class="label">الملفات</div></div>
+      <div class="app" data-app="الحاسبة"><div class="icon i-green">🧮</div><div class="label">الحاسبة</div></div>
+    </main>
+
+    <div class="drawer-btn" id="drawerBtn" title="اسحب للأعلى لفتح درج التطبيقات"></div>
+
+    <section class="dock">
+      <div class="app" data-app="الهاتف"><div class="icon i-green">📞</div><div class="label">الهاتف</div></div>
+      <div class="app" data-app="الرسائل"><div class="icon i-blue">💬</div><div class="label">الرسائل</div></div>
+      <div class="app" data-app="المعرض"><div class="icon i-purple">🖼️</div><div class="label">المعرض</div></div>
+      <div class="app" data-app="المتصفح"><div class="icon i-cyan">🌐</div><div class="label">المتصفح</div></div>
+    </section>
+
+    <section class="drawer" id="drawer">
+      <!-- نفس التطبيقات تظهر في الدرج -->
+      <div class="app" data-app="الإعدادات"><div class="icon i-yellow">⚙️</div><div class="label">الإعدادات</div></div>
+      <div class="app" data-app="الموسيقى"><div class="icon i-red">🎵</div><div class="label">الموسيقى</div></div>
+      <div class="app" data-app="الطقس"><div class="icon i-blue">☀️</div><div class="label">الطقس</div></div>
+      <div class="app" data-app="الملاحظات"><div class="icon i-purple">📝</div><div class="label">الملاحظات</div></div>
+      <div class="app" data-app="الحاسبة"><div class="icon i-green">🧮</div><div class="label">الحاسبة</div></div>
+      <div class="app" data-app="الملفات"><div class="icon i-yellow">🗂️</div><div class="label">الملفات</div></div>
+      <div class="app" data-app="الكاميرا"><div class="icon i-red">📷</div><div class="label">الكاميرا</div></div>
+      <div class="app" data-app="المعرض"><div class="icon i-purple">🖼️</div><div class="label">المعرض</div></div>
+    </section>
+
+    <section class="panel" id="panel">
+      <div style="text-align:center; color:var(--muted); margin-bottom:8px">لوحة سريعة</div>
+      <div class="toggles">
+        <div class="toggle"><div>الواي فاي</div><button class="btn" data-toggle="wifi">تشغيل</button></div>
+        <div class="toggle"><div>البلوتوث</div><button class="btn" data-toggle="bt">تشغيل</button></div>
+        <div class="toggle"><div>الوضع الليلي</div><button class="btn" data-toggle="dark">تشغيل</button></div>
+        <div class="toggle"><div>البيانات</div><button class="btn" data-toggle="data">تشغيل</button></div>
+      </div>
+      <div class="toggle">
+        <div>السطوع</div>
+        <input id="brightness" class="slider" type="range" min="50" max="140" value="100" />
+      </div>
+    </section>
+
+    <div class="window" id="win">
+      <div class="win-header">
+        <div class="win-title" id="winTitle">تطبيق</div>
+        <div class="win-actions">
+          <button class="btn" id="backBtn">رجوع</button>
+          <button class="btn" id="homeBtn">الرئيسية</button>
+        </div>
+      </div>
+      <div class="win-body" id="winBody">
+        هذا تطبيق وهمي داخل المحاكي. يمكنك تخصيص المحتوى لكل تطبيق بسهولة.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Live time & battery
+    const timeEl = document.getElementById('time');
+    const bFill = document.getElementById('bFill');
+    function updateTime() {
+      const d = new Date();
+      const h = d.getHours().toString().padStart(2,'0');
+      const m = d.getMinutes().toString().padStart(2,'0');
+      timeEl.textContent = `${h}:${m}`;
+    }
+    setInterval(updateTime, 1000); updateTime();
+    let batt = 60; setInterval(() => { batt = Math.max(10, Math.min(100, batt + (Math.random()*6 - 3))); bFill.style.width = batt + '%'; }, 2000);
+
+    // Panels & drawer
+    const panel = document.getElementById('panel');
+    const drawer = document.getElementById('drawer');
+    const drawerBtn = document.getElementById('drawerBtn');
+    const notifPull = document.getElementById('notifPull');
+
+    drawerBtn.addEventListener('click', () => drawer.classList.toggle('open'));
+    notifPull.addEventListener('click', () => panel.classList.toggle('open'));
+
+    // Touch gestures (simple)
+    let startY = null;
+    const phone = document.getElementById('phone');
+    phone.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, {passive:true});
+    phone.addEventListener('touchend', e => { startY = null; }, {passive:true});
+    phone.addEventListener('touchmove', e => {
+      if (startY == null) return;
+      const dy = e.touches[0].clientY - startY;
+      if (dy > 50) { panel.classList.add('open'); drawer.classList.remove('open'); } // swipe down
+      if (dy < -50) { drawer.classList.add('open'); panel.classList.remove('open'); } // swipe up
+    }, {passive:true});
+
+    // Brightness (wallpaper filter)
+    const wp = document.querySelector('.wallpaper');
+    document.getElementById('brightness').addEventListener('input', e => {
+      const v = e.target.value;
+      wp.style.filter = `contrast(${v/100*105}%) saturate(${v/100*115}%)`;
+    });
+
+    // Simple toggles
+    document.querySelectorAll('[data-toggle]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const on = btn.textContent.includes('تشغيل');
+        btn.textContent = on ? 'إيقاف' : 'تشغيل';
+        btn.style.background = on ? 'rgba(40,199,111,0.5)' : 'rgba(255,255,255,0.08)';
+      });
+    });
+
+    // Open fake app windows
+    const win = document.getElementById('win');
+    const winTitle = document.getElementById('winTitle');
+    const winBody = document.getElementById('winBody');
+    document.querySelectorAll('.app').forEach(el => {
+      el.addEventListener('click', (ev) => {
+        ripple(ev);
+        const name = el.dataset.app || 'تطبيق';
+        winTitle.textContent = name;
+        winBody.innerHTML = getAppContent(name);
+        win.classList.add('show');
+        drawer.classList.remove('open');
+        panel.classList.remove('open');
+      });
+    });
+    document.getElementById('homeBtn').addEventListener('click', () => win.classList.remove('show'));
+    document.getElementById('backBtn').addEventListener('click', () => win.classList.remove('show'));
+
+    function getAppContent(name) {
+      const map = {
+        'الهاتف': 'واجهة الاتصال — أرقام سريعة، سجل المكالمات، وجهة وهمية.',
+        'الرسائل': 'صندوق رسائل بسيط — محادثات تجريبية قابلة للتعديل.',
+        'المعرض': 'شبكة صور وهمية — استبدلها لاحقًا بصور حقيقية.',
+        'الإعدادات': 'تبديل الوضع الليلي، السطوع، اللغة، الشبكات — محاكاة.',
+        'المتصفح': '<b>متصفح وهمي:</b> أدخل عنوان URL لعرضه داخل iframe.',
+        'الساعة': 'ساعة رقمية + منبهات وهمية.',
+        'الكاميرا': 'معاينة كاميرا الويب (getUserMedia) يمكن تفعيلها لاحقًا.',
+        'الملاحظات': 'قائمة ملاحظات تُحفظ في localStorage.',
+        'الطقس': 'طقس تجريبي بأرقام ثابتة.',
+        'الموسيقى': 'مشغل بسيط لأصوات تجريبية.',
+        'الملفات': 'مدير ملفات وهمي.',
+        'الحاسبة': '<input id="calc" placeholder="3+4*2" style="width:100%;padding:10px;border-radius:10px;background:rgba(255,255,255,0.06);color:#fff"><div id="calcOut" style="margin-top:10px"></div>'
+      };
+      setTimeout(() => {
+        const inp = document.getElementById('calc');
+        if (inp) {
+          inp.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+              try { document.getElementById('calcOut').textContent = eval(inp.value); }
+              catch { document.getElementById('calcOut').textContent = 'صيغة غير صحيحة'; }
+            }
+          });
+        }
+      }, 50);
+      return map[name] || 'تطبيق تجريبي.';
+    }
+
+    // Tap ripple effect
+    function ripple(e) {
+      const r = document.createElement('span');
+      r.className = 'ripple';
+      r.style.left = e.clientX + 'px';
+      r.style.top = e.clientY + 'px';
+      document.body.appendChild(r);
+      setTimeout(() => r.remove(), 500);
+    }
+
+    // Keyboard shortcuts for desktop
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { panel.classList.remove('open'); drawer.classList.remove('open'); }
+      if (e.key === ' ') { drawer.classList.toggle('open'); }
+      if (e.key.toLowerCase() === 'n') { panel.classList.toggle('open'); }
+    });
+  </script>
+</body>
+</html>
