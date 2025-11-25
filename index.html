@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-<title>Windows Web Simulator</title>
+<title>Windows Pro Web Simulator</title>
 <meta name="theme-color" content="#2563eb" />
 <style>
   :root{
     --bg:#0b1220; --text:#e6eaf3; --muted:#b7c0d6; --panel:#121a2b; --accent:#2563eb;
     --border:#1f2940; --shadow:0 24px 60px rgba(0,0,0,.45);
     --win:#0f172a; --winHeader:#0b1220; --task:#0c1322; --hover:rgba(255,255,255,.08);
+    --ok:#22c55e; --warn:#f59e0b;
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0;background:#000;color:var(--text);font-family:Segoe UI,system-ui,-apple-system,Roboto,"Noto Kufi Arabic",sans-serif}
@@ -17,19 +18,18 @@
     position:relative; width:100vw; height:100vh; overflow:hidden;
     background: radial-gradient(1200px 800px at 20% 10%, #172554 0%, #0ea5e9 35%, #0f172a 85%);
   }
-  /* wallpaper overlay toggle (theme) */
   .desktop.theme-1{background: radial-gradient(1400px 900px at 80% 20%, #1e293b 0%, #22c55e 40%, #0f172a 90%)}
   .desktop.theme-2{background: radial-gradient(1200px 800px at 20% 80%, #1e293b 0%, #a855f7 40%, #0f172a 90%)}
 
-  /* icons grid (desktop shortcuts) */
-  .icons{ position:absolute; inset:64px 0 64px; padding:16px; display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:12px; }
+  /* icons grid */
+  .icons{ position:absolute; inset:64px 0 64px; padding:16px; display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:12px; }
   .icon{
     display:flex; flex-direction:column; align-items:center; gap:8px; padding:10px; border-radius:12px; cursor:pointer; user-select:none;
     background:transparent; transition:.12s; color:var(--text);
   }
   .icon:hover{ background:var(--hover) }
   .icon .glyph{
-    width:56px; height:56px; border-radius:12px; display:grid; place-items:center; font-size:28px;
+    width:56px; height:56px; border-radius:12px; display:grid; place-items:center; font-size:26px; font-weight:700;
     background:linear-gradient(135deg,#3b82f6,#1d4ed8); color:#fff; box-shadow: inset 0 -10px 18px rgba(0,0,0,.25), 0 8px 18px rgba(0,0,0,.35);
   }
   .icon .label{ font-size:12px; text-align:center; max-width:120px; }
@@ -43,26 +43,26 @@
   .start-btn:hover{ background:var(--hover) }
   .start-dot{ width:24px; height:24px; border-radius:6px; background:linear-gradient(135deg,#22c55e,#16a34a); display:inline-block }
   .tasks{ flex:1; display:flex; gap:8px; align-items:center; overflow-x:auto; padding:6px 0 }
-  .task{ min-width:120px; max-width:220px; padding:8px 10px; border-radius:10px; background:rgba(255,255,255,.06); color:#fff; cursor:pointer; border:1px solid var(--border); display:flex; justify-content:space-between; }
+  .task{ min-width:140px; max-width:250px; padding:8px 10px; border-radius:10px; background:rgba(255,255,255,.06); color:#fff; cursor:pointer; border:1px solid var(--border); display:flex; justify-content:space-between; }
   .task.active{ outline:2px solid var(--accent) }
   .sys{ display:flex; align-items:center; gap:10px; color:var(--muted); }
   .clock{ font-weight:600 }
 
   /* start menu */
   .start{
-    position:absolute; left:10px; bottom:64px; width:340px; max-height:60vh; background:var(--panel);
+    position:absolute; left:10px; bottom:64px; width:420px; max-height:60vh; background:var(--panel);
     border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow); display:none; z-index:1000;
   }
   .start.show{ display:block }
   .start .search{ padding:8px; border-bottom:1px solid var(--border) }
   .start input{ width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:#0a1020; color:#fff }
-  .start .apps{ padding:10px; display:grid; grid-template-columns:repeat(2,1fr); gap:10px }
+  .start .apps{ padding:10px; display:grid; grid-template-columns:repeat(3,1fr); gap:10px }
   .start .app{ display:flex; align-items:center; gap:8px; padding:8px; border-radius:10px; background:rgba(255,255,255,.06); cursor:pointer }
   .start .app:hover{ background:rgba(255,255,255,.12) }
 
   /* window */
   .win{
-    position:absolute; top:120px; left:160px; width:640px; height:420px; background:var(--win); border:1px solid var(--border);
+    position:absolute; top:120px; left:160px; width:760px; height:480px; background:var(--win); border:1px solid var(--border);
     border-radius:12px; box-shadow:var(--shadow); display:flex; flex-direction:column; overflow:hidden;
   }
   .win.hidden{ display:none }
@@ -78,31 +78,42 @@
   .resize{ position:absolute; right:0; bottom:0; width:14px; height:14px; cursor:nwse-resize; background:linear-gradient(135deg,transparent 50%, rgba(255,255,255,.2) 50%) }
 
   /* context menu */
-  .ctx{ position:absolute; background:var(--panel); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow); display:none; z-index:2000; min-width:180px; }
+  .ctx{ position:absolute; background:var(--panel); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow); display:none; z-index:2000; min-width:200px; }
   .ctx.show{ display:block }
   .ctx .item{ padding:8px 10px; cursor:pointer }
   .ctx .item:hover{ background:rgba(255,255,255,.08) }
 
   /* notifications */
   .toast{
-    position:absolute; right:16px; bottom:70px; min-width:240px; max-width:340px;
+    position:absolute; right:16px; bottom:70px; min-width:260px; max-width:360px;
     background:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); display:none; z-index:1500;
     padding:10px; color:var(--text)
   }
   .toast.show{ display:block }
 
-  /* apps content styles */
-  .explorer{ display:grid; grid-template-columns:220px 1fr; gap:10px; height:100% }
-  .explorer .side{ border-right:1px solid var(--border); padding-right:10px }
-  .explorer .item{ padding:6px 8px; border-radius:8px; cursor:pointer }
-  .explorer .item:hover{ background:rgba(255,255,255,.06) }
-  .files{ display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px }
+  /* app styles */
+  .grid2{ display:grid; grid-template-columns:220px 1fr; gap:10px; height:100% }
+  .side{ border-right:1px solid var(--border); padding-right:10px }
+  .item{ padding:6px 8px; border-radius:8px; cursor:pointer }
+  .item:hover{ background:rgba(255,255,255,.06) }
+  .files{ display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px }
   .file{ border:1px solid var(--border); border-radius:10px; padding:10px; background:rgba(255,255,255,.05) }
+
   .editor{ width:100%; height:100%; }
   .editor textarea{ width:100%; height:100%; padding:10px; border:1px solid var(--border); border-radius:10px; background:#0a1020; color:#fff }
-  .browser iframe{ width:100%; height:100%; border:0; background:#0a1020 }
-  .terminal{ background:#0a1020; color:#e2e8f0; font-family:Consolas,monospace; padding:10px; border-radius:10px }
-  .terminal .prompt{ color:#22c55e }
+
+  .browser-bar{ display:flex; gap:8px; margin-bottom:8px }
+  .browser-bar input{ flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:#0a1020; color:#fff }
+  .browser iframe{ width:100%; height:calc(100% - 50px); border:0; background:#0a1020 }
+
+  .calc{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px }
+  .calc input{ grid-column:1/-1; padding:10px; border-radius:8px; background:#0a1020; border:1px solid var(--border); color:#fff }
+  .calc button{ padding:10px; border-radius:8px; border:0; background:rgba(255,255,255,.08); color:#fff; cursor:pointer }
+  .calc button:hover{ background:rgba(255,255,255,.16) }
+
+  .music audio{ width:100% }
+  .paint canvas{ background:#0a1020; border:1px solid var(--border); border-radius:10px }
+  .tasks-app li{ display:flex; align-items:center; gap:8px; margin:6px 0 }
 </style>
 </head>
 <body>
@@ -112,7 +123,7 @@
 
   <!-- Start menu -->
   <div class="start" id="start">
-    <div class="search"><input id="startSearch" placeholder="ابحث عن تطبيق أو ملف" /></div>
+    <div class="search"><input id="startSearch" placeholder="ابحث عن تطبيق" /></div>
     <div class="apps" id="startApps"></div>
   </div>
 
@@ -140,17 +151,24 @@
 
 <script>
 /* =========================
-   CONFIG
+   CONFIG — Apps catalog
    ========================= */
 const APPS = [
   { id:'explorer', name:'المستكشف', glyph:'📁' },
   { id:'notepad',  name:'المفكرة',  glyph:'📝' },
-  { id:'browser',  name:'المتصفح',  glyph:'🌐' },
+  { id:'browser',  name:'المتصفح (Pro)', glyph:'🌐' },
   { id:'terminal', name:'الطرفية',  glyph:'>_' },
   { id:'settings', name:'الإعدادات', glyph:'⚙️' },
+  { id:'calculator', name:'الحاسبة', glyph:'🧮' },
+  { id:'music', name:'الموسيقى', glyph:'🎵' },
+  { id:'gallery', name:'المعرض', glyph:'🖼️' },
+  { id:'paint', name:'الرسام', glyph:'🎨' },
+  { id:'todo', name:'المهام', glyph:'✅' },
+  { id:'store', name:'متجر التطبيقات', glyph:'🛍️' }
 ];
+
 const DESKTOP_SHORTCUTS = [
-  { id:'explorer' }, { id:'notepad' }, { id:'browser' }, { id:'terminal' }, { id:'settings' }
+  { id:'explorer' }, { id:'browser' }, { id:'notepad' }, { id:'calculator' }, { id:'gallery' }, { id:'music' }, { id:'paint' }, { id:'todo' }, { id:'settings' }, { id:'store' }
 ];
 
 /* =========================
@@ -180,6 +198,12 @@ function clockTick(){
   clockEl.textContent = `${h}:${m}`;
 }
 setInterval(clockTick, 1000); clockTick();
+
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(()=>toastEl.classList.remove('show'), 2500);
+}
 
 /* =========================
    DESKTOP & START MENU
@@ -259,8 +283,8 @@ function createWindow(app){
   const w = document.createElement('div');
   w.className='win';
   w.dataset.app=app.id;
-  w.style.top = (120 + Math.random()*60)+'px';
-  w.style.left = (160 + Math.random()*120)+'px';
+  w.style.top = (72 + Math.random()*60)+'px';
+  w.style.left = (90 + Math.random()*120)+'px';
 
   const header = document.createElement('div');
   header.className='win-header';
@@ -285,7 +309,7 @@ function createWindow(app){
   // resize
   let rs=false, sx=0, sy=0, sw=0, sh=0;
   res.addEventListener('mousedown', e=>{ rs=true; sx=e.clientX; sy=e.clientY; sw=w.offsetWidth; sh=w.offsetHeight; e.preventDefault(); });
-  window.addEventListener('mousemove', e=>{ if(rs){ w.style.width = Math.max(360, sw + (e.clientX - sx))+'px'; w.style.height = Math.max(240, sh + (e.clientY - sy))+'px'; } });
+  window.addEventListener('mousemove', e=>{ if(rs){ w.style.width = Math.max(420, sw + (e.clientX - sx))+'px'; w.style.height = Math.max(280, sh + (e.clientY - sy))+'px'; } });
   window.addEventListener('mouseup', ()=>rs=false);
 
   // actions
@@ -294,7 +318,7 @@ function createWindow(app){
       const act=b.dataset.act;
       if (act==='close'){ w.classList.add('hidden'); const t=tasks.get(app.id); if(t) t.remove(); tasks.delete(app.id); windows.delete(app.id); }
       if (act==='min'){ w.classList.add('hidden'); const t=tasks.get(app.id); if(t) t.classList.remove('active'); }
-      if (act==='max'){ w.style.top='64px'; w.style.left='20px'; w.style.width='calc(100vw - 40px)'; w.style.height='calc(100vh - 120px)'; focusWindow(w); }
+      if (act==='max'){ w.style.top='48px'; w.style.left='16px'; w.style.width='calc(100vw - 32px)'; w.style.height='calc(100vh - 110px)'; focusWindow(w); }
     });
   });
 
@@ -308,7 +332,7 @@ function createWindow(app){
    ========================= */
 function renderApp(id){
   if (id==='explorer'){
-    const wrap = document.createElement('div'); wrap.className='explorer';
+    const wrap = document.createElement('div'); wrap.className='grid2';
     const side = document.createElement('div'); side.className='side';
     side.innerHTML = `<div class="item" data-path="Desktop">سطح المكتب</div>
                       <div class="item" data-path="Documents">مستندات</div>
@@ -358,31 +382,51 @@ function renderApp(id){
 
   if (id==='browser'){
     const wrap = document.createElement('div'); wrap.className='browser';
-    wrap.innerHTML = `<div style="display:flex;gap:8px;margin-bottom:8px">
-      <input id="url" placeholder="https://example.com" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:#0a1020;color:#fff">
+    wrap.innerHTML = `<div class="browser-bar">
+      <select id="mode">
+        <option value="external">فتح كامل (تبويب جديد)</option>
+        <option value="embed">تضمين داخل النافذة</option>
+      </select>
+      <input id="url" placeholder="https://www.google.com" value="https://www.google.com">
       <button class="btn" id="go">اذهب</button>
-    </div><iframe id="frame" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>`;
-    const url = wrap.querySelector('#url'); const frame = wrap.querySelector('#frame');
-    wrap.querySelector('#go').onclick = ()=>{
-      const u = url.value.trim(); if(!u) return;
-      frame.src = u.startsWith('http')?u:('https://'+u);
-    };
+    </div>
+    <iframe id="frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+    <div style="margin-top:8px;color:var(--muted)">
+      ملاحظة: بعض المواقع الأمنية (مثل Google) قد تمنع التضمين داخل iframe. في هذه الحالة استخدم وضع "فتح كامل".
+    </div>`;
+    const mode = wrap.querySelector('#mode');
+    const url = wrap.querySelector('#url');
+    const frame = wrap.querySelector('#frame');
+    function navigate(){
+      const u = url.value.trim();
+      if (!u) return;
+      const full = u.startsWith('http') ? u : ('https://' + u);
+      if (mode.value === 'external'){
+        window.open(full, '_blank', 'noopener,noreferrer');
+        toast('تم فتح الموقع في تبويب جديد');
+      } else {
+        frame.src = full;
+      }
+    }
+    wrap.querySelector('#go').onclick = navigate;
+    url.addEventListener('keydown', e=>{ if(e.key==='Enter') navigate(); });
     return wrap;
   }
 
   if (id==='terminal'){
     const wrap = document.createElement('div'); wrap.className='terminal';
-    wrap.innerHTML = `<div>Terminal — اكتب أمرًا ثم اضغط Enter</div>
+    wrap.innerHTML = `<div>Terminal — اكتب أمرًا ثم Enter</div>
       <div id="out" style="margin:8px 0;white-space:pre-wrap"></div>
       <div><span class="prompt">C:\\></span> <input id="cmd" style="width:80%;background:#0a1020;border:1px solid var(--border);color:#fff;padding:6px;border-radius:8px"></div>`;
     const out = wrap.querySelector('#out'); const cmd = wrap.querySelector('#cmd');
     const cmds = {
-      help: ()=>"الأوامر: help, echo <text>, date, ls, clear, theme <0|1|2>",
+      help: ()=>"الأوامر: help, echo <text>, date, ls, clear, theme <0|1|2>, about",
       echo: (args)=>args.join(' '),
       date: ()=>new Date().toString(),
       ls: ()=>"Desktop Documents Downloads",
       clear: ()=>{ out.textContent=''; return ''; },
-      theme: (args)=>{ const n=Number(args[0]||0); setTheme(n); return 'تم تغيير الخلفية إلى '+n; }
+      theme: (args)=>{ const n=Number(args[0]||0); setTheme(n); return 'تم تغيير الخلفية إلى '+n; },
+      about: ()=>"Windows Pro Web Simulator — ملف واحد، PWA، متصفح بوضعين، تطبيقات متعددة."
     };
     cmd.addEventListener('keydown', e=>{
       if (e.key==='Enter'){
@@ -411,7 +455,7 @@ function renderApp(id){
         <div style="margin-top:6px"><button class="btn" id="notify">إظهار إشعار</button></div>
       </div>
       <div class="file"><div style="font-weight:600">حول</div>
-        <div style="margin-top:6px;color:var(--muted)">Windows Web Simulator — ملف واحد، PWA، نوافذ متعددة، حفظ محلي.</div>
+        <div style="margin-top:6px;color:var(--muted)">Windows Pro Web Simulator — ملف واحد، PWA، متصفح بوضعين، تطبيقات متعددة.</div>
       </div>
     </div>`;
     wrap.querySelectorAll('[data-theme]').forEach(b=>{
@@ -421,12 +465,133 @@ function renderApp(id){
     return wrap;
   }
 
+  if (id==='calculator'){
+    const wrap = document.createElement('div'); wrap.className='calc';
+    wrap.innerHTML = `<input id="calcIn" placeholder="3+4*2">
+      ${['7','8','9','/','4','5','6','*','1','2','3','-','0','.','=','+'].map(k=>`<button>${k}</button>`).join('')}
+      <div id="calcOut" style="grid-column:1/-1;color:var(--muted)"></div>`;
+    const out = wrap.querySelector('#calcOut'); const input = wrap.querySelector('#calcIn');
+    wrap.querySelectorAll('button').forEach(b=>{
+      b.onclick = ()=>{
+        const k=b.textContent;
+        if(k==='='){ try{ out.textContent = 'النتيجة: ' + Function('return '+input.value)(); } catch{ out.textContent='صيغة غير صحيحة'; } }
+        else input.value += k;
+      };
+    });
+    return wrap;
+  }
+
+  if (id==='music'){
+    const wrap = document.createElement('div'); wrap.className='music';
+    wrap.innerHTML = `<div style="margin-bottom:8px">مشغل موسيقى بسيط (ضع ملفك عبر إدخال عنوان):</div>
+      <input id="src" placeholder="https://example.com/track.mp3" style="width:100%;padding:8px;border-radius:8px;background:#0a1020;border:1px solid var(--border);color:#fff">
+      <audio id="player" controls></audio>`;
+    const src = wrap.querySelector('#src'); const player = wrap.querySelector('#player');
+    src.addEventListener('keydown', e=>{ if(e.key==='Enter'){ player.src = src.value.trim(); player.play().catch(()=>{}); } });
+    return wrap;
+  }
+
+  if (id==='gallery'){
+    const wrap = document.createElement('div'); wrap.className='files';
+    const imgs = JSON.parse(localStorage.getItem('gallery')||'[]');
+    function render(){
+      wrap.innerHTML='';
+      imgs.forEach((u,i)=>{
+        const card = document.createElement('div'); card.className='file';
+        card.innerHTML = `<img src="${u}" style="width:100%;height:160px;object-fit:cover;border-radius:8px"><div style="margin-top:6px;font-size:12px;color:var(--muted)">صورة ${i+1}</div>`;
+        wrap.appendChild(card);
+      });
+      const add = document.createElement('div'); add.className='file';
+      add.innerHTML = `<div style="display:flex;gap:8px;align-items:center">
+        <input id="imgUrl" placeholder="رابط صورة..." style="flex:1;padding:8px;border-radius:8px;background:#0a1020;border:1px solid var(--border);color:#fff">
+        <button class="btn" id="addImg">إضافة</button>
+      </div>`;
+      add.querySelector('#addImg').onclick = ()=>{
+        const u = add.querySelector('#imgUrl').value.trim();
+        if(u){ imgs.push(u); localStorage.setItem('gallery', JSON.stringify(imgs)); render(); toast('تمت إضافة صورة'); }
+      };
+      wrap.appendChild(add);
+    }
+    render();
+    return wrap;
+  }
+
+  if (id==='paint'){
+    const wrap = document.createElement('div'); wrap.className='paint';
+    wrap.innerHTML = `<div style="margin-bottom:8px;display:flex;gap:8px">
+      <label>الحجم <input id="size" type="range" min="2" max="24" value="6"></label>
+      <input id="color" type="color" value="#22c55e">
+      <button class="btn" id="clear">مسح</button>
+    </div>
+    <canvas id="c" width="800" height="380"></canvas>`;
+    const c = wrap.querySelector('#c'); const ctx = c.getContext('2d');
+    let drawing=false, size=6, color='#22c55e';
+    c.addEventListener('mousedown', e=>{ drawing=true; draw(e); });
+    c.addEventListener('mousemove', e=>{ if(drawing) draw(e); });
+    window.addEventListener('mouseup', ()=>drawing=false);
+    function draw(e){ const rect=c.getBoundingClientRect(); const x=e.clientX-rect.left; const y=e.clientY-rect.top; ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,size,0,Math.PI*2); ctx.fill(); }
+    wrap.querySelector('#size').oninput = e=> size=Number(e.target.value);
+    wrap.querySelector('#color').oninput = e=> color=e.target.value;
+    wrap.querySelector('#clear').onclick = ()=> ctx.clearRect(0,0,c.width,c.height);
+    return wrap;
+  }
+
+  if (id==='todo'){
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `<div style="display:flex;gap:8px;margin-bottom:8px">
+      <input id="taskIn" placeholder="مهمة جديدة" style="flex:1;padding:8px;border-radius:8px;background:#0a1020;border:1px solid var(--border);color:#fff">
+      <button class="btn" id="add">إضافة</button>
+    </div>
+    <ul id="list" class="tasks-app" style="list-style:none;padding:0;margin:0"></ul>`;
+    const list = wrap.querySelector('#list');
+    const tasksDB = JSON.parse(localStorage.getItem('tasksDB')||'[]');
+    function render(){
+      list.innerHTML='';
+      tasksDB.forEach((t,i)=>{
+        const li = document.createElement('li');
+        li.innerHTML = `<input type="checkbox" ${t.done?'checked':''}> <span>${t.text}</span> <button class="btn" data-i="${i}">حذف</button>`;
+        li.querySelector('input').onchange = e=>{ t.done = e.target.checked; save(); render(); };
+        li.querySelector('button').onclick = e=>{ tasksDB.splice(Number(e.target.dataset.i),1); save(); render(); };
+        list.appendChild(li);
+      });
+    }
+    function save(){ localStorage.setItem('tasksDB', JSON.stringify(tasksDB)); }
+    wrap.querySelector('#add').onclick = ()=>{
+      const val = wrap.querySelector('#taskIn').value.trim(); if(!val) return;
+      tasksDB.push({text:val, done:false}); save(); render(); wrap.querySelector('#taskIn').value='';
+    };
+    render();
+    return wrap;
+  }
+
+  if (id==='store'){
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `<div style="margin-bottom:8px;color:var(--muted)">متجر تطبيقات وهمي — يمكنك تثبيت اختصارات جديدة إلى سطح المكتب.</div>
+      <div class="files" id="appsGrid"></div>`;
+    const appsGrid = wrap.querySelector('#appsGrid');
+    const catalog = [
+      {id:'notes2', name:'مفكرة متقدمة', glyph:'🗒️', install:()=>toast('تثبيت تجريبي — استخدمّ المفكرة الأساسية')},
+      {id:'player', name:'مشغل فيديو', glyph:'📺', install:()=>toast('شغّل فيديو عبر المتصفح أو الموسيقى')},
+      {id:'camera', name:'كاميرا ويب', glyph:'📷', install:()=>toast('يمكن إضافة getUserMedia لاحقًا')}
+    ];
+    catalog.forEach(app=>{
+      const card = document.createElement('div'); card.className='file';
+      card.innerHTML = `<div style="font-weight:600">${app.name}</div><div style="font-size:12px;color:var(--muted)">${app.glyph}</div>
+        <div style="margin-top:8px"><button class="btn">تثبيت</button></div>`;
+      card.querySelector('.btn').onclick = ()=>{
+        app.install();
+      };
+      appsGrid.appendChild(card);
+    });
+    return wrap;
+  }
+
   // fallback
   const div = document.createElement('div'); div.textContent='تطبيق غير معروف'; return div;
 }
 
 /* =========================
-   CONTEXT MENU & TOAST
+   CONTEXT MENU & THEMES
    ========================= */
 desk.addEventListener('contextmenu', e=>{
   e.preventDefault();
@@ -439,22 +604,12 @@ ctxEl.addEventListener('click', e=>{
   ctxEl.classList.remove('show');
   if (cmd==='new-note') openApp('notepad');
   if (cmd==='new-window'){
-    const id='blank-'+Math.random().toString(36).slice(2);
-    APPS.push({id,name:'نافذة',glyph:'🪟'}); // temp
-    openApp(id); // create dummy window
+    const tmpId='blank-'+Math.random().toString(36).slice(2);
+    APPS.push({id:tmpId,name:'نافذة',glyph:'🪟'}); openApp(tmpId);
   }
   if (cmd==='theme') setTheme((themeIndex+1)%3);
   if (cmd==='settings') openApp('settings');
 });
-function toast(msg){
-  toastEl.textContent = msg;
-  toastEl.classList.add('show');
-  setTimeout(()=>toastEl.classList.remove('show'), 2500);
-}
-
-/* =========================
-   THEMES
-   ========================= */
 function setTheme(i){
   themeIndex = i;
   desk.className = 'desktop theme-'+i;
@@ -472,8 +627,8 @@ setTheme(themeIndex);
    PWA — Manifest & Service Worker (inline)
    ========================= */
 const manifest = {
-  name: "Windows Web Simulator",
-  short_name: "WinSim",
+  name: "Windows Pro Web Simulator",
+  short_name: "WinPro",
   start_url: "./index.html",
   display: "standalone",
   background_color: "#0b1220",
@@ -489,7 +644,7 @@ const manifestURL = URL.createObjectURL(new Blob([JSON.stringify(manifest)], {ty
 const linkManifest = document.createElement('link'); linkManifest.rel='manifest'; linkManifest.href=manifestURL; document.head.appendChild(linkManifest);
 
 const swCode = `
-  const CACHE='winsim-v1';
+  const CACHE='winsim-pro-v1';
   const ASSETS=['./','./index.html'];
   self.addEventListener('install',e=>{
     e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
