@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-<title>Windows Pro Web Simulator</title>
+<title>Windows Ultra Web Simulator</title>
 <meta name="theme-color" content="#2563eb" />
 <style>
   :root{
     --bg:#0b1220; --text:#e6eaf3; --muted:#b7c0d6; --panel:#121a2b; --accent:#2563eb;
     --border:#1f2940; --shadow:0 24px 60px rgba(0,0,0,.45);
     --win:#0f172a; --winHeader:#0b1220; --task:#0c1322; --hover:rgba(255,255,255,.08);
-    --ok:#22c55e; --warn:#f59e0b;
+    --ok:#22c55e; --warn:#f59e0b; --danger:#ef4444;
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0;background:#000;color:var(--text);font-family:Segoe UI,system-ui,-apple-system,Roboto,"Noto Kufi Arabic",sans-serif}
@@ -18,8 +18,19 @@
     position:relative; width:100vw; height:100vh; overflow:hidden;
     background: radial-gradient(1200px 800px at 20% 10%, #172554 0%, #0ea5e9 35%, #0f172a 85%);
   }
-  .desktop.theme-1{background: radial-gradient(1400px 900px at 80% 20%, #1e293b 0%, #22c55e 40%, #0f172a 90%)}
-  .desktop.theme-2{background: radial-gradient(1200px 800px at 20% 80%, #1e293b 0%, #a855f7 40%, #0f172a 90%)}
+  /* 9 themes */
+  .theme-0{background: radial-gradient(1200px 800px at 20% 10%, #172554 0%, #0ea5e9 35%, #0f172a 85%)}
+  .theme-1{background: radial-gradient(1400px 900px at 80% 20%, #1e293b 0%, #22c55e 40%, #0f172a 90%)}
+  .theme-2{background: radial-gradient(1200px 800px at 20% 80%, #1e293b 0%, #a855f7 40%, #0f172a 90%)}
+  .theme-3{background: radial-gradient(1200px 800px at 50% 50%, #111827 0%, #f59e0b 40%, #0f172a 90%)}
+  .theme-4{background: radial-gradient(1400px 900px at 30% 70%, #0f172a 0%, #ef4444 40%, #1f2937 90%)}
+  .theme-5{background: radial-gradient(1400px 900px at 70% 30%, #0f172a 0%, #06b6d4 40%, #1f2937 90%)}
+  .theme-6{background: radial-gradient(1400px 900px at 50% 20%, #0f172a 0%, #84cc16 40%, #1f2937 90%)}
+  .theme-7{background: radial-gradient(1200px 800px at 20% 20%, #1f2937 0%, #f43f5e 40%, #0f172a 90%)}
+  .theme-8{background: radial-gradient(1200px 800px at 80% 80%, #1f2937 0%, #22d3ee 40%, #0f172a 90%)}
+
+  /* density (compact/comfortable) */
+  .compact .icons{gap:8px} .compact .win{height:420px}
 
   /* icons grid */
   .icons{ position:absolute; inset:64px 0 64px; padding:16px; display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:12px; }
@@ -47,22 +58,24 @@
   .task.active{ outline:2px solid var(--accent) }
   .sys{ display:flex; align-items:center; gap:10px; color:var(--muted); }
   .clock{ font-weight:600 }
+  .tray{ display:flex; gap:8px; align-items:center }
+  .tray .btn{ padding:6px 8px }
 
   /* start menu */
   .start{
-    position:absolute; left:10px; bottom:64px; width:420px; max-height:60vh; background:var(--panel);
+    position:absolute; left:10px; bottom:64px; width:460px; max-height:62vh; background:var(--panel);
     border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow); display:none; z-index:1000;
   }
   .start.show{ display:block }
   .start .search{ padding:8px; border-bottom:1px solid var(--border) }
-  .start input{ width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:#0a1020; color:#fff }
+  .start input{ width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:#0a1020; color:#fff }
   .start .apps{ padding:10px; display:grid; grid-template-columns:repeat(3,1fr); gap:10px }
   .start .app{ display:flex; align-items:center; gap:8px; padding:8px; border-radius:10px; background:rgba(255,255,255,.06); cursor:pointer }
   .start .app:hover{ background:rgba(255,255,255,.12) }
 
   /* window */
   .win{
-    position:absolute; top:120px; left:160px; width:760px; height:480px; background:var(--win); border:1px solid var(--border);
+    position:absolute; top:120px; left:160px; width:820px; height:520px; background:var(--win); border:1px solid var(--border);
     border-radius:12px; box-shadow:var(--shadow); display:flex; flex-direction:column; overflow:hidden;
   }
   .win.hidden{ display:none }
@@ -78,7 +91,7 @@
   .resize{ position:absolute; right:0; bottom:0; width:14px; height:14px; cursor:nwse-resize; background:linear-gradient(135deg,transparent 50%, rgba(255,255,255,.2) 50%) }
 
   /* context menu */
-  .ctx{ position:absolute; background:var(--panel); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow); display:none; z-index:2000; min-width:200px; }
+  .ctx{ position:absolute; background:var(--panel); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow); display:none; z-index:2000; min-width:220px; }
   .ctx.show{ display:block }
   .ctx .item{ padding:8px 10px; cursor:pointer }
   .ctx .item:hover{ background:rgba(255,255,255,.08) }
@@ -99,11 +112,9 @@
   .files{ display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px }
   .file{ border:1px solid var(--border); border-radius:10px; padding:10px; background:rgba(255,255,255,.05) }
 
-  .editor{ width:100%; height:100%; }
   .editor textarea{ width:100%; height:100%; padding:10px; border:1px solid var(--border); border-radius:10px; background:#0a1020; color:#fff }
-
   .browser-bar{ display:flex; gap:8px; margin-bottom:8px }
-  .browser-bar input{ flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:#0a1020; color:#fff }
+  .browser-bar input, .browser-bar select{ padding:8px; border-radius:8px; border:1px solid var(--border); background:#0a1020; color:#fff }
   .browser iframe{ width:100%; height:calc(100% - 50px); border:0; background:#0a1020 }
 
   .calc{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px }
@@ -114,6 +125,10 @@
   .music audio{ width:100% }
   .paint canvas{ background:#0a1020; border:1px solid var(--border); border-radius:10px }
   .tasks-app li{ display:flex; align-items:center; gap:8px; margin:6px 0 }
+  .md{ display:grid; grid-template-columns:1fr 1fr; gap:10px; height:100% }
+  .md textarea{ width:100%; height:100%; background:#0a1020; color:#fff; border:1px solid var(--border); border-radius:10px; padding:10px }
+  .md .preview{ border:1px solid var(--border); border-radius:10px; padding:10px; overflow:auto }
+  .code textarea{ width:100%; height:100%; background:#0a1020; color:#e2e8f0; font-family:Consolas,monospace; border:1px solid var(--border); border-radius:10px; padding:10px }
 </style>
 </head>
 <body>
@@ -132,7 +147,11 @@
     <button class="start-btn" id="startBtn"><span class="start-dot"></span><span>ابدأ</span></button>
     <div class="tasks" id="tasks"></div>
     <div class="sys">
-      <span id="net">Wi‑Fi</span>
+      <div class="tray">
+        <button class="btn" id="snapL">Snap يسار</button>
+        <button class="btn" id="snapR">Snap يمين</button>
+        <button class="btn" id="showDesk">إظهار سطح المكتب</button>
+      </div>
       <span class="clock" id="clock">00:00</span>
     </div>
   </footer>
@@ -142,7 +161,9 @@
     <div class="item" data-cmd="new-note">مذكرة جديدة</div>
     <div class="item" data-cmd="new-window">نافذة فارغة</div>
     <div class="item" data-cmd="theme">تغيير الخلفية</div>
+    <div class="item" data-cmd="density">تبديل الكثافة</div>
     <div class="item" data-cmd="settings">الإعدادات</div>
+    <div class="item" data-cmd="store">متجر التطبيقات</div>
   </div>
 
   <!-- Toast -->
@@ -151,24 +172,29 @@
 
 <script>
 /* =========================
-   CONFIG — Apps catalog
+   APPS REGISTRY — أضف/وسّع بحرية
    ========================= */
-const APPS = [
-  { id:'explorer', name:'المستكشف', glyph:'📁' },
-  { id:'notepad',  name:'المفكرة',  glyph:'📝' },
-  { id:'browser',  name:'المتصفح (Pro)', glyph:'🌐' },
-  { id:'terminal', name:'الطرفية',  glyph:'>_' },
-  { id:'settings', name:'الإعدادات', glyph:'⚙️' },
-  { id:'calculator', name:'الحاسبة', glyph:'🧮' },
-  { id:'music', name:'الموسيقى', glyph:'🎵' },
-  { id:'gallery', name:'المعرض', glyph:'🖼️' },
-  { id:'paint', name:'الرسام', glyph:'🎨' },
-  { id:'todo', name:'المهام', glyph:'✅' },
-  { id:'store', name:'متجر التطبيقات', glyph:'🛍️' }
+const REGISTRY = [
+  { id:'explorer',  name:'المستكشف',    glyph:'📁' },
+  { id:'notepad',   name:'المفكرة',     glyph:'📝' },
+  { id:'browser',   name:'المتصفح (Pro)', glyph:'🌐' },
+  { id:'terminal',  name:'الطرفية',     glyph:'>_' },
+  { id:'settings',  name:'الإعدادات',    glyph:'⚙️' },
+  { id:'calculator',name:'الحاسبة',     glyph:'🧮' },
+  { id:'music',     name:'الموسيقى',     glyph:'🎵' },
+  { id:'gallery',   name:'المعرض',       glyph:'🖼️' },
+  { id:'paint',     name:'الرسام',       glyph:'🎨' },
+  { id:'todo',      name:'المهام',       glyph:'✅' },
+  { id:'store',     name:'متجر التطبيقات', glyph:'🛍️' },
+  { id:'calendar',  name:'التقويم',      glyph:'📅' },
+  { id:'mail',      name:'البريد',       glyph:'✉️' },
+  { id:'video',     name:'الفيديو',      glyph:'📺' },
+  { id:'markdown',  name:'Markdown',     glyph:'🗒️' },
+  { id:'code',      name:'محرر كود',     glyph:'💻' },
 ];
 
-const DESKTOP_SHORTCUTS = [
-  { id:'explorer' }, { id:'browser' }, { id:'notepad' }, { id:'calculator' }, { id:'gallery' }, { id:'music' }, { id:'paint' }, { id:'todo' }, { id:'settings' }, { id:'store' }
+const DESKTOP = [
+  'explorer','browser','notepad','calculator','gallery','music','paint','todo','calendar','mail','video','markdown','code','settings','store'
 ];
 
 /* =========================
@@ -178,6 +204,7 @@ let zCounter = 10;
 const windows = new Map(); // id -> dom
 const tasks = new Map();   // id -> task button
 let themeIndex = Number(localStorage.getItem('themeIndex') || 0);
+let compact = localStorage.getItem('density') === 'compact';
 
 /* =========================
    UTIL
@@ -192,6 +219,9 @@ const tasksEl = document.getElementById('tasks');
 const clockEl = document.getElementById('clock');
 const ctxEl = document.getElementById('ctx');
 const toastEl = document.getElementById('toast');
+const snapL = document.getElementById('snapL');
+const snapR = document.getElementById('snapR');
+const showDesk = document.getElementById('showDesk');
 
 function clockTick(){
   const d=new Date(); const h=d.getHours().toString().padStart(2,'0'); const m=d.getMinutes().toString().padStart(2,'0');
@@ -199,19 +229,15 @@ function clockTick(){
 }
 setInterval(clockTick, 1000); clockTick();
 
-function toast(msg){
-  toastEl.textContent = msg;
-  toastEl.classList.add('show');
-  setTimeout(()=>toastEl.classList.remove('show'), 2500);
-}
+function toast(msg){ toastEl.textContent = msg; toastEl.classList.add('show'); setTimeout(()=>toastEl.classList.remove('show'), 2500); }
 
 /* =========================
    DESKTOP & START MENU
    ========================= */
-function buildDesktopShortcuts(){
+function buildDesktop(){
   iconsEl.innerHTML='';
-  DESKTOP_SHORTCUTS.forEach(s=>{
-    const a = APPS.find(x=>x.id===s.id);
+  DESKTOP.forEach(id=>{
+    const a = REGISTRY.find(x=>x.id===id);
     const div = document.createElement('div');
     div.className='icon';
     div.dataset.app=a.id;
@@ -220,9 +246,9 @@ function buildDesktopShortcuts(){
     iconsEl.appendChild(div);
   });
 }
-function buildStartMenu(){
+function buildStart(){
   startApps.innerHTML='';
-  APPS.forEach(a=>{
+  REGISTRY.forEach(a=>{
     const row = document.createElement('div');
     row.className='app';
     row.dataset.app=a.id;
@@ -231,9 +257,7 @@ function buildStartMenu(){
     startApps.appendChild(row);
   });
 }
-function toggleStart(show){
-  startEl.classList.toggle('show', show ?? !startEl.classList.contains('show'));
-}
+function toggleStart(show){ startEl.classList.toggle('show', show ?? !startEl.classList.contains('show')); }
 startBtn.addEventListener('click', ()=>toggleStart());
 desk.addEventListener('click', (e)=>{
   if (!startEl.contains(e.target) && !startBtn.contains(e.target)) toggleStart(false);
@@ -248,10 +272,10 @@ startSearch.addEventListener('input', ()=>{
 });
 
 /* =========================
-   WINDOWS & TASKS
+   WINDOWS & TASKS & SNAP
    ========================= */
 function openApp(id){
-  const app = APPS.find(x=>x.id===id);
+  const app = REGISTRY.find(x=>x.id===id);
   if (!app) return;
   let win = windows.get(id);
   if (!win){
@@ -309,7 +333,7 @@ function createWindow(app){
   // resize
   let rs=false, sx=0, sy=0, sw=0, sh=0;
   res.addEventListener('mousedown', e=>{ rs=true; sx=e.clientX; sy=e.clientY; sw=w.offsetWidth; sh=w.offsetHeight; e.preventDefault(); });
-  window.addEventListener('mousemove', e=>{ if(rs){ w.style.width = Math.max(420, sw + (e.clientX - sx))+'px'; w.style.height = Math.max(280, sh + (e.clientY - sy))+'px'; } });
+  window.addEventListener('mousemove', e=>{ if(rs){ w.style.width = Math.max(440, sw + (e.clientX - sx))+'px'; w.style.height = Math.max(300, sh + (e.clientY - sy))+'px'; } });
   window.addEventListener('mouseup', ()=>rs=false);
 
   // actions
@@ -326,6 +350,24 @@ function createWindow(app){
   w.addEventListener('mousedown', ()=>focusWindow(w));
   return w;
 }
+
+// Snap helpers
+function activeWindow(){
+  const id = [...tasks.keys()].find(k => tasks.get(k).classList.contains('active'));
+  return id ? windows.get(id) : null;
+}
+snapL.onclick = ()=>{
+  const w = activeWindow(); if(!w) return toast('اختر نافذة أولًا');
+  w.style.top='48px'; w.style.left='16px'; w.style.width='calc(50vw - 24px)'; w.style.height='calc(100vh - 110px)';
+};
+snapR.onclick = ()=>{
+  const w = activeWindow(); if(!w) return toast('اختر نافذة أولًا');
+  w.style.top='48px'; w.style.left='calc(50vw + 8px)'; w.style.width='calc(50vw - 24px)'; w.style.height='calc(100vh - 110px)';
+};
+showDesk.onclick = ()=>{
+  document.querySelectorAll('.win').forEach(w=>w.classList.add('hidden'));
+  document.querySelectorAll('.task').forEach(t=>t.classList.remove('active'));
+};
 
 /* =========================
    APPS RENDERERS
@@ -347,22 +389,19 @@ function renderApp(id){
       items.forEach(f=>{
         const div = document.createElement('div'); div.className='file';
         div.innerHTML = `<div style="font-weight:600">${f.name}</div><div style="font-size:12px;color:var(--muted)">${f.type} • ${f.size}</div>`;
-        div.addEventListener('dblclick', ()=>{
-          if (f.app) openApp(f.app);
-        });
+        div.addEventListener('dblclick', ()=>{ if (f.app) openApp(f.app); });
         main.appendChild(div);
       });
     }
     function sampleFiles(path){
       const samples={
         Desktop:[{name:'مفكرة.txt',type:'Text',size:'2 KB',app:'notepad'},{name:'تعليمات.html',type:'HTML',size:'4 KB',app:'browser'}],
-        Documents:[{name:'مشروع.md',type:'Markdown',size:'3 KB',app:'notepad'}],
+        Documents:[{name:'مشروع.md',type:'Markdown',size:'3 KB',app:'markdown'}],
         Downloads:[{name:'index.html',type:'HTML',size:'6 KB',app:'browser'}]
       }; return samples[path]||[];
     }
     side.querySelectorAll('.item').forEach(el=>el.addEventListener('click', ()=>list(el.dataset.path)));
-    list('Desktop');
-    return wrap;
+    list('Desktop'); return wrap;
   }
 
   if (id==='notepad'){
@@ -371,8 +410,7 @@ function renderApp(id){
       <button class="btn" id="noteSave">حفظ</button>
       <button class="btn" id="noteLoad">تحميل</button>
       <button class="btn" id="noteNew">جديد</button>
-    </div>
-    <textarea id="noteArea" placeholder="اكتب هنا..."></textarea>`;
+    </div><textarea id="noteArea" placeholder="اكتب هنا..."></textarea>`;
     const area = wrap.querySelector('#noteArea');
     wrap.querySelector('#noteSave').onclick = ()=>{ localStorage.setItem('notepad', area.value); toast('تم الحفظ'); };
     wrap.querySelector('#noteLoad').onclick = ()=>{ area.value = localStorage.getItem('notepad')||''; toast('تم التحميل'); };
@@ -391,22 +429,13 @@ function renderApp(id){
       <button class="btn" id="go">اذهب</button>
     </div>
     <iframe id="frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
-    <div style="margin-top:8px;color:var(--muted)">
-      ملاحظة: بعض المواقع الأمنية (مثل Google) قد تمنع التضمين داخل iframe. في هذه الحالة استخدم وضع "فتح كامل".
-    </div>`;
-    const mode = wrap.querySelector('#mode');
-    const url = wrap.querySelector('#url');
-    const frame = wrap.querySelector('#frame');
+    <div style="margin-top:8px;color:var(--muted)">بعض المواقع (مثل Google) قد تمنع التضمين داخل iframe. استخدم وضع "فتح كامل" للمواقع المقيدة.</div>`;
+    const mode = wrap.querySelector('#mode'); const url = wrap.querySelector('#url'); const frame = wrap.querySelector('#frame');
     function navigate(){
-      const u = url.value.trim();
-      if (!u) return;
+      const u = url.value.trim(); if (!u) return;
       const full = u.startsWith('http') ? u : ('https://' + u);
-      if (mode.value === 'external'){
-        window.open(full, '_blank', 'noopener,noreferrer');
-        toast('تم فتح الموقع في تبويب جديد');
-      } else {
-        frame.src = full;
-      }
+      if (mode.value === 'external'){ window.open(full, '_blank', 'noopener,noreferrer'); toast('فتح الموقع في تبويب جديد'); }
+      else { frame.src = full; }
     }
     wrap.querySelector('#go').onclick = navigate;
     url.addEventListener('keydown', e=>{ if(e.key==='Enter') navigate(); });
@@ -414,19 +443,21 @@ function renderApp(id){
   }
 
   if (id==='terminal'){
-    const wrap = document.createElement('div'); wrap.className='terminal';
-    wrap.innerHTML = `<div>Terminal — اكتب أمرًا ثم Enter</div>
+    const wrap = document.createElement('div'); wrap.className='editor';
+    wrap.innerHTML = `<div class="terminal" style="background:#0a1020;color:#e2e8f0;padding:10px;border-radius:10px">
+      <div>Terminal — اكتب أمرًا ثم Enter</div>
       <div id="out" style="margin:8px 0;white-space:pre-wrap"></div>
-      <div><span class="prompt">C:\\></span> <input id="cmd" style="width:80%;background:#0a1020;border:1px solid var(--border);color:#fff;padding:6px;border-radius:8px"></div>`;
+      <div><span style="color:#22c55e">C:\\></span> <input id="cmd" style="width:80%;background:#0a1020;border:1px solid var(--border);color:#fff;padding:6px;border-radius:8px"></div>
+    </div>`;
     const out = wrap.querySelector('#out'); const cmd = wrap.querySelector('#cmd');
     const cmds = {
-      help: ()=>"الأوامر: help, echo <text>, date, ls, clear, theme <0|1|2>, about",
+      help: ()=>"الأوامر: help, echo <text>, date, ls, clear, theme <0..8>, density <compact|comfortable>",
       echo: (args)=>args.join(' '),
       date: ()=>new Date().toString(),
       ls: ()=>"Desktop Documents Downloads",
       clear: ()=>{ out.textContent=''; return ''; },
       theme: (args)=>{ const n=Number(args[0]||0); setTheme(n); return 'تم تغيير الخلفية إلى '+n; },
-      about: ()=>"Windows Pro Web Simulator — ملف واحد، PWA، متصفح بوضعين، تطبيقات متعددة."
+      density: (args)=>{ setDensity(args[0]==='compact'); return 'تم ضبط الكثافة:'+(args[0]||'comfortable'); }
     };
     cmd.addEventListener('keydown', e=>{
       if (e.key==='Enter'){
@@ -445,22 +476,26 @@ function renderApp(id){
     const wrap = document.createElement('div'); wrap.style.padding='6px';
     wrap.innerHTML = `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
       <div class="file"><div style="font-weight:600">السِمة</div>
+        <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap">
+          ${Array.from({length:9}).map((_,i)=>`<button class="btn" data-theme="${i}">ثيم ${i}</button>`).join('')}
+        </div>
+      </div>
+      <div class="file"><div style="font-weight:600">الكثافة</div>
         <div style="margin-top:6px;display:flex;gap:8px">
-          <button class="btn" data-theme="0">افتراضي</button>
-          <button class="btn" data-theme="1">أخضر</button>
-          <button class="btn" data-theme="2">بنفسجي</button>
+          <button class="btn" id="compact">مضغوط</button>
+          <button class="btn" id="comfortable">مريح</button>
         </div>
       </div>
       <div class="file"><div style="font-weight:600">إشعارات</div>
         <div style="margin-top:6px"><button class="btn" id="notify">إظهار إشعار</button></div>
       </div>
       <div class="file"><div style="font-weight:600">حول</div>
-        <div style="margin-top:6px;color:var(--muted)">Windows Pro Web Simulator — ملف واحد، PWA، متصفح بوضعين، تطبيقات متعددة.</div>
+        <div style="margin-top:6px;color:var(--muted)">Windows Ultra Web Simulator — ملف واحد، PWA، متجر داخلي، متصفح بوضعين، وRegistry لإضافة عدد غير محدود من التطبيقات.</div>
       </div>
     </div>`;
-    wrap.querySelectorAll('[data-theme]').forEach(b=>{
-      b.onclick = ()=> setTheme(Number(b.dataset.theme));
-    });
+    wrap.querySelectorAll('[data-theme]').forEach(b=> b.onclick = ()=> setTheme(Number(b.dataset.theme)));
+    wrap.querySelector('#compact').onclick = ()=> setDensity(true);
+    wrap.querySelector('#comfortable').onclick = ()=> setDensity(false);
     wrap.querySelector('#notify').onclick = ()=>toast('هذا إشعار تجريبي 🎉');
     return wrap;
   }
@@ -483,10 +518,20 @@ function renderApp(id){
 
   if (id==='music'){
     const wrap = document.createElement('div'); wrap.className='music';
-    wrap.innerHTML = `<div style="margin-bottom:8px">مشغل موسيقى بسيط (ضع ملفك عبر إدخال عنوان):</div>
+    wrap.innerHTML = `<div style="margin-bottom:8px">مشغل موسيقى — أدخل رابط MP3:</div>
       <input id="src" placeholder="https://example.com/track.mp3" style="width:100%;padding:8px;border-radius:8px;background:#0a1020;border:1px solid var(--border);color:#fff">
       <audio id="player" controls></audio>`;
     const src = wrap.querySelector('#src'); const player = wrap.querySelector('#player');
+    src.addEventListener('keydown', e=>{ if(e.key==='Enter'){ player.src = src.value.trim(); player.play().catch(()=>{}); } });
+    return wrap;
+  }
+
+  if (id==='video'){
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `<div style="margin-bottom:8px">مشغل فيديو — أدخل رابط mp4/m3u8 (قد تختلف التوافقية):</div>
+      <input id="vsrc" placeholder="https://example.com/video.mp4" style="width:100%;padding:8px;border-radius:8px;background:#0a1020;border:1px solid var(--border);color:#fff">
+      <video id="vplayer" controls style="width:100%;max-height:360px;background:#000"></video>`;
+    const src = wrap.querySelector('#vsrc'); const player = wrap.querySelector('#vplayer');
     src.addEventListener('keydown', e=>{ if(e.key==='Enter'){ player.src = src.value.trim(); player.play().catch(()=>{}); } });
     return wrap;
   }
@@ -512,8 +557,7 @@ function renderApp(id){
       };
       wrap.appendChild(add);
     }
-    render();
-    return wrap;
+    render(); return wrap;
   }
 
   if (id==='paint'){
@@ -522,8 +566,7 @@ function renderApp(id){
       <label>الحجم <input id="size" type="range" min="2" max="24" value="6"></label>
       <input id="color" type="color" value="#22c55e">
       <button class="btn" id="clear">مسح</button>
-    </div>
-    <canvas id="c" width="800" height="380"></canvas>`;
+    </div><canvas id="c" width="800" height="380"></canvas>`;
     const c = wrap.querySelector('#c'); const ctx = c.getContext('2d');
     let drawing=false, size=6, color='#22c55e';
     c.addEventListener('mousedown', e=>{ drawing=true; draw(e); });
@@ -541,8 +584,7 @@ function renderApp(id){
     wrap.innerHTML = `<div style="display:flex;gap:8px;margin-bottom:8px">
       <input id="taskIn" placeholder="مهمة جديدة" style="flex:1;padding:8px;border-radius:8px;background:#0a1020;border:1px solid var(--border);color:#fff">
       <button class="btn" id="add">إضافة</button>
-    </div>
-    <ul id="list" class="tasks-app" style="list-style:none;padding:0;margin:0"></ul>`;
+    </div><ul id="list" class="tasks-app" style="list-style:none;padding:0;margin:0"></ul>`;
     const list = wrap.querySelector('#list');
     const tasksDB = JSON.parse(localStorage.getItem('tasksDB')||'[]');
     function render(){
@@ -560,29 +602,108 @@ function renderApp(id){
       const val = wrap.querySelector('#taskIn').value.trim(); if(!val) return;
       tasksDB.push({text:val, done:false}); save(); render(); wrap.querySelector('#taskIn').value='';
     };
-    render();
-    return wrap;
+    render(); return wrap;
   }
 
   if (id==='store'){
     const wrap = document.createElement('div');
-    wrap.innerHTML = `<div style="margin-bottom:8px;color:var(--muted)">متجر تطبيقات وهمي — يمكنك تثبيت اختصارات جديدة إلى سطح المكتب.</div>
+    wrap.innerHTML = `<div style="margin-bottom:8px;color:var(--muted)">متجر وهمي — ثبت/أضف اختصارات وتطبيقات جديدة بسرعة.</div>
       <div class="files" id="appsGrid"></div>`;
     const appsGrid = wrap.querySelector('#appsGrid');
     const catalog = [
-      {id:'notes2', name:'مفكرة متقدمة', glyph:'🗒️', install:()=>toast('تثبيت تجريبي — استخدمّ المفكرة الأساسية')},
-      {id:'player', name:'مشغل فيديو', glyph:'📺', install:()=>toast('شغّل فيديو عبر المتصفح أو الموسيقى')},
-      {id:'camera', name:'كاميرا ويب', glyph:'📷', install:()=>toast('يمكن إضافة getUserMedia لاحقًا')}
+      {id:'notes2', name:'مفكرة متقدمة', glyph:'🗒️', install:()=>toast('تثبيت تجريبي — استخدم المفكرة الحالية')},
+      {id:'player', name:'مشغل فيديو متقدم', glyph:'🎬', install:()=>openApp('video')},
+      {id:'camera', name:'كاميرا ويب', glyph:'📷', install:()=>toast('يمكن إضافة getUserMedia لاحقًا')},
+      {id:'maps', name:'خرائط (تضمين)', glyph:'🗺️', install:()=>embedShortcut('browser','https://www.openstreetmap.org')}
     ];
-    catalog.forEach(app=>{
-      const card = document.createElement('div'); card.className='file';
-      card.innerHTML = `<div style="font-weight:600">${app.name}</div><div style="font-size:12px;color:var(--muted)">${app.glyph}</div>
+    function card(app){
+      const div = document.createElement('div'); div.className='file';
+      div.innerHTML = `<div style="font-weight:600">${app.name}</div><div style="font-size:12px;color:var(--muted)">${app.glyph}</div>
         <div style="margin-top:8px"><button class="btn">تثبيت</button></div>`;
-      card.querySelector('.btn').onclick = ()=>{
-        app.install();
-      };
-      appsGrid.appendChild(card);
-    });
+      div.querySelector('.btn').onclick = ()=> app.install();
+      return div;
+    }
+    catalog.forEach(a=> appsGrid.appendChild(card(a)));
+    return wrap;
+  }
+
+  if (id==='calendar'){
+    const wrap = document.createElement('div');
+    const d = new Date();
+    wrap.innerHTML = `<div style="margin-bottom:8px;font-weight:600">تقويم ${d.getFullYear()}</div>
+      <div id="cal"></div>`;
+    const cal = wrap.querySelector('#cal');
+    function renderMonth(year, month){
+      const first = new Date(year,month,1); const days = new Date(year,month+1,0).getDate();
+      const grid = document.createElement('div'); grid.style.display='grid'; grid.style.gridTemplateColumns='repeat(7,1fr)'; grid.style.gap='6px';
+      const names=['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+      names.forEach(n=>{ const h=document.createElement('div'); h.style.color='var(--muted)'; h.textContent=n; grid.appendChild(h); });
+      for(let i=0;i<first.getDay();i++){ grid.appendChild(document.createElement('div')); }
+      for(let d=1; d<=days; d++){ const cell=document.createElement('div'); cell.className='file'; cell.textContent=d; grid.appendChild(cell); }
+      return grid;
+    }
+    cal.appendChild(renderMonth(d.getFullYear(), d.getMonth()));
+    return wrap;
+  }
+
+  if (id==='mail'){
+    const wrap = document.createElement('div');
+    const inbox = JSON.parse(localStorage.getItem('inbox')||'[]');
+    wrap.innerHTML = `<div style="display:grid;grid-template-columns:240px 1fr;gap:10px">
+      <div>
+        <button class="btn" id="compose">رسالة جديدة</button>
+        <div id="list" style="margin-top:10px"></div>
+      </div>
+      <div id="view" class="file">اختر رسالة للعرض</div>
+    </div>`;
+    const list = wrap.querySelector('#list'); const view = wrap.querySelector('#view');
+    function render(){
+      list.innerHTML='';
+      inbox.forEach((m,i)=>{
+        const item = document.createElement('div'); item.className='item'; item.textContent = (m.subject||'بدون عنوان');
+        item.onclick = ()=> view.innerHTML = `<div style="font-weight:600">${m.subject}</div><div style="margin-top:8px">${m.body}</div>`;
+        list.appendChild(item);
+      });
+    }
+    wrap.querySelector('#compose').onclick = ()=>{
+      const subj = prompt('الموضوع:'); const body = (subj?prompt('المحتوى:'):'');
+      if (subj){ inbox.unshift({subject:subj, body:body||''}); localStorage.setItem('inbox', JSON.stringify(inbox)); render(); toast('تم إرسال/حفظ الرسالة'); }
+    };
+    render(); return wrap;
+  }
+
+  if (id==='markdown'){
+    const wrap = document.createElement('div'); wrap.className='md';
+    wrap.innerHTML = `<textarea id="mdIn" placeholder="# عنوان\n\nنص **غامق**، *مائل*, وقائمة:\n- عنصر 1\n- عنصر 2"></textarea>
+      <div class="preview" id="mdOut"></div>`;
+    const input = wrap.querySelector('#mdIn'); const out = wrap.querySelector('#mdOut');
+    function renderMD(src){
+      let html = src
+        .replace(/^# (.*)$/gm, '<h2>$1</h2>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/^- (.*)$/gm, '<li>$1</li>');
+      html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+      out.innerHTML = html;
+    }
+    input.addEventListener('input', ()=> renderMD(input.value));
+    renderMD(input.value); return wrap;
+  }
+
+  if (id==='code'){
+    const wrap = document.createElement('div'); wrap.className='code';
+    wrap.innerHTML = `<div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="btn" id="run">تشغيل HTML</button>
+      <button class="btn" id="save">حفظ</button>
+      <button class="btn" id="load">تحميل</button>
+    </div><textarea id="src" placeholder="اكتب HTML/CSS/JS بسيط هنا..."></textarea>
+    <iframe id="out" sandbox="allow-scripts allow-same-origin" style="width:100%;height:280px;border:0;margin-top:8px;background:#0a1020"></iframe>`;
+    const src = wrap.querySelector('#src'); const out = wrap.querySelector('#out');
+    wrap.querySelector('#run').onclick = ()=>{
+      const blob = new Blob([src.value], {type:'text/html'}); out.src = URL.createObjectURL(blob);
+    };
+    wrap.querySelector('#save').onclick = ()=>{ localStorage.setItem('codepad', src.value); toast('تم الحفظ'); };
+    wrap.querySelector('#load').onclick = ()=>{ src.value = localStorage.getItem('codepad')||''; toast('تم التحميل'); };
     return wrap;
   }
 
@@ -591,7 +712,16 @@ function renderApp(id){
 }
 
 /* =========================
-   CONTEXT MENU & THEMES
+   PLUGINS / SHORTCUT HELPERS
+   ========================= */
+function embedShortcut(appId, param){
+  // مثال: يفتح المتصفح مع URL محدد
+  openApp(appId);
+  // يمكن توسيع ربط المعلمات عبر نافذة التطبيق لاحقًا
+}
+
+/* =========================
+   CONTEXT MENU & THEMES & DENSITY
    ========================= */
 desk.addEventListener('contextmenu', e=>{
   e.preventDefault();
@@ -603,32 +733,37 @@ ctxEl.addEventListener('click', e=>{
   const cmd = e.target.dataset.cmd;
   ctxEl.classList.remove('show');
   if (cmd==='new-note') openApp('notepad');
-  if (cmd==='new-window'){
-    const tmpId='blank-'+Math.random().toString(36).slice(2);
-    APPS.push({id:tmpId,name:'نافذة',glyph:'🪟'}); openApp(tmpId);
-  }
-  if (cmd==='theme') setTheme((themeIndex+1)%3);
+  if (cmd==='new-window'){ const tmpId='blank-'+Math.random().toString(36).slice(2); REGISTRY.push({id:tmpId,name:'نافذة',glyph:'🪟'}); openApp(tmpId); }
+  if (cmd==='theme') setTheme((themeIndex+1)%9);
+  if (cmd==='density') setDensity(!compact);
   if (cmd==='settings') openApp('settings');
+  if (cmd==='store') openApp('store');
 });
 function setTheme(i){
   themeIndex = i;
-  desk.className = 'desktop theme-'+i;
+  desk.className = 'desktop theme-'+i + (compact?' compact':'');
   localStorage.setItem('themeIndex', i);
+}
+function setDensity(isCompact){
+  compact = !!isCompact;
+  desk.className = 'desktop theme-'+themeIndex + (compact?' compact':'');
+  localStorage.setItem('density', compact?'compact':'comfortable');
 }
 
 /* =========================
    INIT
    ========================= */
-buildDesktopShortcuts();
-buildStartMenu();
+buildDesktop();
+buildStart();
 setTheme(themeIndex);
+setDensity(compact);
 
 /* =========================
    PWA — Manifest & Service Worker (inline)
    ========================= */
 const manifest = {
-  name: "Windows Pro Web Simulator",
-  short_name: "WinPro",
+  name: "Windows Ultra Web Simulator",
+  short_name: "WinUltra",
   start_url: "./index.html",
   display: "standalone",
   background_color: "#0b1220",
@@ -644,7 +779,7 @@ const manifestURL = URL.createObjectURL(new Blob([JSON.stringify(manifest)], {ty
 const linkManifest = document.createElement('link'); linkManifest.rel='manifest'; linkManifest.href=manifestURL; document.head.appendChild(linkManifest);
 
 const swCode = `
-  const CACHE='winsim-pro-v1';
+  const CACHE='win-ultra-v1';
   const ASSETS=['./','./index.html'];
   self.addEventListener('install',e=>{
     e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
