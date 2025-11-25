@@ -4,29 +4,31 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
   <title>Oppo Web Simulator</title>
+  <meta name="theme-color" content="#22c55e" />
   <style>
     :root {
       --bg: #0c0f14;
-      --glass: rgba(255,255,255,0.08);
       --text: #f5f7fb;
-      --muted: #c7cbd6;
-      --accent: #28c76f;
-      --danger: #ff4d4f;
-      --dock: rgba(20,24,32,0.65);
+      --muted: #b8bdca;
+      --accent: #22c55e;
       --blur: saturate(140%) blur(12px);
+      --tile: rgba(255,255,255,0.06);
+      --tile-hover: rgba(255,255,255,0.10);
+      --panel: rgba(10,14,20,0.82);
+      --dock: rgba(18,22,28,0.75);
     }
     * { box-sizing: border-box; }
-    html, body { height: 100%; margin: 0; background: #000; color: var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Kufi Arabic", sans-serif; }
+    html, body { height: 100%; margin: 0; background: #000; color: var(--text); font-family: "Noto Naskh Arabic", system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    .wrap { display: grid; place-items: center; height: 100%; }
     /* Phone shell */
     .phone {
       position: relative;
-      margin: 0 auto;
       width: min(420px, 92vw);
-      height: min(800px, 92vh);
+      height: min(820px, 92vh);
       border-radius: 36px;
-      background: var(--bg) center / cover no-repeat;
+      background: var(--bg);
       overflow: hidden;
-      box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+      box-shadow: 0 40px 80px rgba(0,0,0,0.55);
       border: 10px solid #0a0c10;
     }
     /* Wallpaper */
@@ -35,6 +37,10 @@
       background: radial-gradient(1200px 800px at 20% 10%, #1a2a6c 0%, #b21f1f 45%, #fdbb2d 100%);
       filter: contrast(105%) saturate(115%);
       z-index: 0;
+    }
+    .notch {
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 120px; height: 24px; background: rgba(0,0,0,0.65); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; z-index: 6;
     }
     /* Status bar */
     .status {
@@ -50,61 +56,62 @@
     .bar:nth-child(2){ height: 12px; } .bar:nth-child(3){ height: 14px; } .bar:nth-child(4){ height: 16px; opacity: 1; }
     .batt { width: 22px; height: 12px; border: 2px solid #b8bcc9; border-radius: 3px; position: relative; }
     .batt::after { content: ""; position: absolute; right: -5px; top: 3px; width: 3px; height: 6px; background: #b8bcc9; border-radius: 2px; }
-    .batt-fill { position: absolute; left: 2px; top: 2px; bottom: 2px; width: 60%; background: #82e082; border-radius: 2px; }
-    /* Notification shade button */
-    .notif-pull {
-      position: absolute; top: 52px; left: 50%; transform: translateX(-50%);
-      width: 56px; height: 5px; background: rgba(255,255,255,0.35); border-radius: 999px; z-index: 5;
-    }
+    .batt-fill { position: absolute; left: 2px; top: 2px; bottom: 2px; width: 70%; background: #82e082; border-radius: 2px; }
     /* Home grid */
     .home {
       position: absolute; inset: 0; padding: 62px 12px 96px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; z-index: 1;
     }
     .app {
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
-      background: rgba(255,255,255,0.05); border-radius: 18px; padding: 12px 6px; cursor: pointer; user-select: none;
+      background: var(--tile); border-radius: 18px; padding: 12px 6px; cursor: pointer; user-select: none;
       backdrop-filter: var(--blur);
       transition: transform .12s ease, background .12s ease, box-shadow .12s ease;
     }
-    .app:hover { transform: translateY(-2px) scale(1.02); background: rgba(255,255,255,0.08); box-shadow: 0 6px 16px rgba(0,0,0,0.25); }
+    .app:hover { transform: translateY(-2px) scale(1.02); background: var(--tile-hover); box-shadow: 0 6px 16px rgba(0,0,0,0.25); }
     .icon {
-      width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; color: #fff; font-size: 22px; font-weight: 700;
-      box-shadow: inset 0 -8px 18px rgba(0,0,0,0.3), 0 6px 16px rgba(0,0,0,0.35);
+      width: 52px; height: 52px; border-radius: 12px; display: grid; place-items: center; overflow: hidden;
+      box-shadow: inset 0 -8px 18px rgba(0,0,0,0.28), 0 6px 16px rgba(0,0,0,0.35);
+      background: #1b1f2a;
     }
-    .label { font-size: 12px; color: var(--text); text-align: center; max-width: 80px; }
-    /* Icon themes */
-    .i-green { background: linear-gradient(135deg, #34e89e, #0f3443); }
-    .i-blue { background: linear-gradient(135deg, #396afc, #2948ff); }
-    .i-red { background: linear-gradient(135deg, #ff512f, #dd2476); }
-    .i-yellow { background: linear-gradient(135deg, #f6d365, #fda085); color: #252525; }
-    .i-purple { background: linear-gradient(135deg, #833ab4, #5b2a86); }
-    .i-cyan { background: linear-gradient(135deg, #00c6ff, #0072ff); }
+    .icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .label { font-size: 12px; color: var(--text); text-align: center; max-width: 88px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
     /* Dock */
     .dock {
-      position: absolute; left: 12px; right: 12px; bottom: 20px; height: 68px; border-radius: 22px;
+      position: absolute; left: 12px; right: 12px; bottom: 20px; height: 72px; border-radius: 22px;
       display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 8px;
       backdrop-filter: var(--blur);
       background: var(--dock); z-index: 5;
       box-shadow: 0 12px 32px rgba(0,0,0,0.4);
     }
-    .dock .app { background: rgba(255,255,255,0.08); }
-    /* App drawer button */
+    .dock .app { background: rgba(255,255,255,0.10); }
+    /* Drawer button */
     .drawer-btn {
-      position: absolute; bottom: 96px; left: 50%; transform: translateX(-50%);
+      position: absolute; bottom: 98px; left: 50%; transform: translateX(-50%);
       width: 70px; height: 6px; background: rgba(255,255,255,0.35); border-radius: 999px; z-index: 5; cursor: pointer;
     }
     /* App drawer */
     .drawer {
-      position: absolute; left: 0; right: 0; bottom: -100%; top: auto; height: 70%;
-      background: rgba(10,14,20,0.8); backdrop-filter: var(--blur); border-top-left-radius: 24px; border-top-right-radius: 24px;
+      position: absolute; left: 0; right: 0; bottom: -100%; top: auto; height: 72%;
+      background: var(--panel); backdrop-filter: var(--blur); border-top-left-radius: 24px; border-top-right-radius: 24px;
       box-shadow: 0 -20px 40px rgba(0,0,0,0.45); z-index: 20; transition: bottom .22s ease;
       padding: 16px;
       display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
     }
     .drawer.open { bottom: 0; }
-    /* Fake app window */
+    /* Quick panel */
+    .panel {
+      position: absolute; top: -72%; left: 0; right: 0; height: 72%;
+      background: var(--panel); backdrop-filter: var(--blur); border-bottom-left-radius: 24px; border-bottom-right-radius: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.45); z-index: 25; transition: top .22s ease;
+      padding: 16px;
+    }
+    .panel.open { top: 0; }
+    .toggles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+    .toggle { text-align: center; background: rgba(255,255,255,0.08); padding: 10px; border-radius: 14px; }
+    .slider { width: 100%; }
+    /* Window */
     .window {
-      position: absolute; inset: 44px 0 0; background: rgba(8,10,14,0.85); backdrop-filter: var(--blur); z-index: 30; display: none;
+      position: absolute; inset: 44px 0 0; background: rgba(8,10,14,0.86); backdrop-filter: var(--blur); z-index: 30; display: none;
     }
     .window.show { display: block; }
     .win-header { height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; background: rgba(0,0,0,0.35); }
@@ -113,105 +120,124 @@
     .btn { background: rgba(255,255,255,0.08); color: var(--text); border: 0; padding: 8px 10px; border-radius: 10px; cursor: pointer; }
     .btn:hover { background: rgba(255,255,255,0.16); }
     .win-body { padding: 16px; color: var(--muted); line-height: 1.6; }
-    /* Quick panel (notifications) */
-    .panel {
-      position: absolute; top: -70%; left: 0; right: 0; height: 70%;
-      background: rgba(12,16,22,0.92); backdrop-filter: var(--blur); border-bottom-left-radius: 24px; border-bottom-right-radius: 24px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.45); z-index: 25; transition: top .22s ease;
-      padding: 16px;
-    }
-    .panel.open { top: 0; }
-    .toggles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
-    .toggle { text-align: center; background: rgba(255,255,255,0.06); padding: 10px; border-radius: 14px; }
-    .slider { width: 100%; }
-    /* Simple tap ripple */
+    /* Ripple */
     .ripple { position: absolute; border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); animation: ripple .5s ease forwards; background: rgba(255,255,255,0.2); }
     @keyframes ripple { from { width: 0; height: 0; opacity: .8; } to { width: 160px; height: 160px; opacity: 0; } }
   </style>
 </head>
 <body>
-  <div class="phone" id="phone">
-    <div class="wallpaper"></div>
-
-    <div class="status">
-      <div class="time" id="time">20:30</div>
-      <div class="status-icons">
-        <span class="sig"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></span>
-        <span>4G</span>
-        <span class="batt"><span class="batt-fill" id="bFill"></span></span>
-      </div>
-    </div>
-    <div class="notif-pull" id="notifPull" title="اسحب لأسفل لفتح اللوحة"></div>
-
-    <main class="home" id="home">
-      <!-- بعض التطبيقات الشائعة -->
-      <div class="app" data-app="الهاتف"><div class="icon i-green">📞</div><div class="label">الهاتف</div></div>
-      <div class="app" data-app="الرسائل"><div class="icon i-blue">💬</div><div class="label">الرسائل</div></div>
-      <div class="app" data-app="المعرض"><div class="icon i-purple">🖼️</div><div class="label">المعرض</div></div>
-      <div class="app" data-app="الإعدادات"><div class="icon i-yellow">⚙️</div><div class="label">الإعدادات</div></div>
-      <div class="app" data-app="المتصفح"><div class="icon i-cyan">🌐</div><div class="label">المتصفح</div></div>
-      <div class="app" data-app="الساعة"><div class="icon i-green">⏰</div><div class="label">الساعة</div></div>
-      <div class="app" data-app="الكاميرا"><div class="icon i-red">📷</div><div class="label">الكاميرا</div></div>
-      <div class="app" data-app="الملاحظات"><div class="icon i-purple">📝</div><div class="label">الملاحظات</div></div>
-      <div class="app" data-app="الطقس"><div class="icon i-blue">☀️</div><div class="label">الطقس</div></div>
-      <div class="app" data-app="الموسيقى"><div class="icon i-red">🎵</div><div class="label">الموسيقى</div></div>
-      <div class="app" data-app="الملفات"><div class="icon i-yellow">🗂️</div><div class="label">الملفات</div></div>
-      <div class="app" data-app="الحاسبة"><div class="icon i-green">🧮</div><div class="label">الحاسبة</div></div>
-    </main>
-
-    <div class="drawer-btn" id="drawerBtn" title="اسحب للأعلى لفتح درج التطبيقات"></div>
-
-    <section class="dock">
-      <div class="app" data-app="الهاتف"><div class="icon i-green">📞</div><div class="label">الهاتف</div></div>
-      <div class="app" data-app="الرسائل"><div class="icon i-blue">💬</div><div class="label">الرسائل</div></div>
-      <div class="app" data-app="المعرض"><div class="icon i-purple">🖼️</div><div class="label">المعرض</div></div>
-      <div class="app" data-app="المتصفح"><div class="icon i-cyan">🌐</div><div class="label">المتصفح</div></div>
-    </section>
-
-    <section class="drawer" id="drawer">
-      <!-- نفس التطبيقات تظهر في الدرج -->
-      <div class="app" data-app="الإعدادات"><div class="icon i-yellow">⚙️</div><div class="label">الإعدادات</div></div>
-      <div class="app" data-app="الموسيقى"><div class="icon i-red">🎵</div><div class="label">الموسيقى</div></div>
-      <div class="app" data-app="الطقس"><div class="icon i-blue">☀️</div><div class="label">الطقس</div></div>
-      <div class="app" data-app="الملاحظات"><div class="icon i-purple">📝</div><div class="label">الملاحظات</div></div>
-      <div class="app" data-app="الحاسبة"><div class="icon i-green">🧮</div><div class="label">الحاسبة</div></div>
-      <div class="app" data-app="الملفات"><div class="icon i-yellow">🗂️</div><div class="label">الملفات</div></div>
-      <div class="app" data-app="الكاميرا"><div class="icon i-red">📷</div><div class="label">الكاميرا</div></div>
-      <div class="app" data-app="المعرض"><div class="icon i-purple">🖼️</div><div class="label">المعرض</div></div>
-    </section>
-
-    <section class="panel" id="panel">
-      <div style="text-align:center; color:var(--muted); margin-bottom:8px">لوحة سريعة</div>
-      <div class="toggles">
-        <div class="toggle"><div>الواي فاي</div><button class="btn" data-toggle="wifi">تشغيل</button></div>
-        <div class="toggle"><div>البلوتوث</div><button class="btn" data-toggle="bt">تشغيل</button></div>
-        <div class="toggle"><div>الوضع الليلي</div><button class="btn" data-toggle="dark">تشغيل</button></div>
-        <div class="toggle"><div>البيانات</div><button class="btn" data-toggle="data">تشغيل</button></div>
-      </div>
-      <div class="toggle">
-        <div>السطوع</div>
-        <input id="brightness" class="slider" type="range" min="50" max="140" value="100" />
-      </div>
-    </section>
-
-    <div class="window" id="win">
-      <div class="win-header">
-        <div class="win-title" id="winTitle">تطبيق</div>
-        <div class="win-actions">
-          <button class="btn" id="backBtn">رجوع</button>
-          <button class="btn" id="homeBtn">الرئيسية</button>
+  <div class="wrap">
+    <div class="phone" id="phone">
+      <div class="wallpaper" id="wallpaper"></div>
+      <div class="notch"></div>
+      <div class="status">
+        <div class="time" id="time">20:30</div>
+        <div class="status-icons">
+          <span class="sig"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></span>
+          <span>4G</span>
+          <span class="batt"><span class="batt-fill" id="bFill"></span></span>
         </div>
       </div>
-      <div class="win-body" id="winBody">
-        هذا تطبيق وهمي داخل المحاكي. يمكنك تخصيص المحتوى لكل تطبيق بسهولة.
+      <div class="drawer-btn" id="drawerBtn" title="اسحب للأعلى لفتح درج التطبيقات"></div>
+
+      <!-- Home grid: ضع الأيقونات الأصلية هنا عبر config -->
+      <main class="home" id="home"></main>
+
+      <!-- Dock -->
+      <section class="dock" id="dock"></section>
+
+      <!-- Drawer -->
+      <section class="drawer" id="drawer"></section>
+
+      <!-- Quick panel -->
+      <section class="panel" id="panel">
+        <div style="text-align:center; color:var(--muted); margin-bottom:8px">لوحة سريعة</div>
+        <div class="toggles">
+          <div class="toggle"><div>الواي فاي</div><button class="btn" data-toggle="wifi">تشغيل</button></div>
+          <div class="toggle"><div>البلوتوث</div><button class="btn" data-toggle="bt">تشغيل</button></div>
+          <div class="toggle"><div>الوضع الليلي</div><button class="btn" data-toggle="dark">تشغيل</button></div>
+          <div class="toggle"><div>البيانات</div><button class="btn" data-toggle="data">تشغيل</button></div>
+        </div>
+        <div class="toggle">
+          <div>السطوع</div>
+          <input id="brightness" class="slider" type="range" min="50" max="140" value="100" />
+        </div>
+      </section>
+
+      <!-- App window -->
+      <div class="window" id="win">
+        <div class="win-header">
+          <div class="win-title" id="winTitle">تطبيق</div>
+          <div class="win-actions">
+            <button class="btn" id="backBtn">رجوع</button>
+            <button class="btn" id="homeBtn">الرئيسية</button>
+          </div>
+        </div>
+        <div class="win-body" id="winBody">
+          هذا تطبيق وهمي داخل المحاكي. يمكنك تخصيص المحتوى لكل تطبيق بسهولة.
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    // Live time & battery
+    /* =======================
+       1) CONFIG — غيّر الروابط هنا لتطابق واجهة OPPO بالظبط
+       ======================= */
+    const CONFIG = {
+      wallpaperURL: "", // ضع رابط خلفية Oppo الأصلية هنا (PNG/JPG)
+      // أيقونات ColorOS (ضع روابط صور مربعة 512x512 إن أمكن)
+      icons: {
+        "الهاتف": "",         // phone
+        "الرسائل": "",        // messages
+        "المعرض": "",         // photos
+        "الإعدادات": "",      // settings
+        "المتصفح": "",        // browser
+        "الساعة": "",         // clock
+        "الكاميرا": "",       // camera
+        "الملاحظات": "",      // notes
+        "الطقس": "",          // weather
+        "الموسيقى": "",       // music
+        "الملفات": "",        // files
+        "الحاسبة": "",        // calculator
+        "متجر التطبيقات": "",  // app market
+        "مدير الهاتف": ""     // phone manager
+      },
+      homeOrder: [
+        "متجر التطبيقات","الساعة","الطقس","الملفات",
+        "الإعدادات","المعرض","الملاحظات","الموسيقى",
+        "الحاسبة","الكاميرا","المتصفح","مدير الهاتف"
+      ],
+      dockOrder: ["الهاتف","الرسائل","المتصفح","الكاميرا"],
+      drawerOrder: [
+        "الهاتف","الرسائل","المعرض","الإعدادات",
+        "المتصفح","الساعة","الكاميرا","الملاحظات",
+        "الطقس","الموسيقى","الملفات","الحاسبة","متجر التطبيقات","مدير الهاتف"
+      ],
+      // أيقونة PWA للشاشة الرئيسية
+      pwaIconURL: "", // ضع هنا رابط أيقونة أنيقة 512x512 لتطبيقك
+      name: "Oppo Web Simulator",
+      short_name: "OppoSim",
+      theme_color: "#22c55e",
+      background_color: "#0c0f14"
+    };
+
+    /* =======================
+       2) UI Setup
+       ======================= */
     const timeEl = document.getElementById('time');
     const bFill = document.getElementById('bFill');
+    const wallpaper = document.getElementById('wallpaper');
+    const home = document.getElementById('home');
+    const dock = document.getElementById('dock');
+    const drawer = document.getElementById('drawer');
+    const panel = document.getElementById('panel');
+    const drawerBtn = document.getElementById('drawerBtn');
+    const phone = document.getElementById('phone');
+    const win = document.getElementById('win');
+    const winTitle = document.getElementById('winTitle');
+    const winBody = document.getElementById('winBody');
+
     function updateTime() {
       const d = new Date();
       const h = d.getHours().toString().padStart(2,'0');
@@ -219,60 +245,79 @@
       timeEl.textContent = `${h}:${m}`;
     }
     setInterval(updateTime, 1000); updateTime();
-    let batt = 60; setInterval(() => { batt = Math.max(10, Math.min(100, batt + (Math.random()*6 - 3))); bFill.style.width = batt + '%'; }, 2000);
+    let batt = 70; setInterval(() => { batt = Math.max(12, Math.min(100, batt + (Math.random()*6 - 3))); bFill.style.width = batt + '%'; }, 2000);
 
-    // Panels & drawer
-    const panel = document.getElementById('panel');
-    const drawer = document.getElementById('drawer');
-    const drawerBtn = document.getElementById('drawerBtn');
-    const notifPull = document.getElementById('notifPull');
+    // Wallpaper
+    if (CONFIG.wallpaperURL) {
+      wallpaper.style.background = `url('${CONFIG.wallpaperURL}') center / cover no-repeat`;
+      wallpaper.style.filter = 'none';
+    }
 
+    // Build app tiles
+    function tile(name) {
+      const div = document.createElement('div');
+      div.className = 'app';
+      div.dataset.app = name;
+      const icon = document.createElement('div');
+      icon.className = 'icon';
+      if (CONFIG.icons[name]) {
+        const img = document.createElement('img');
+        img.src = CONFIG.icons[name];
+        img.alt = name;
+        icon.appendChild(img);
+      } else {
+        icon.style.background = 'linear-gradient(135deg, #34e89e, #0f3443)';
+      }
+      const label = document.createElement('div');
+      label.className = 'label';
+      label.textContent = name;
+      div.appendChild(icon);
+      div.appendChild(label);
+      div.addEventListener('click', openApp);
+      return div;
+    }
+    function fillGrid(container, orderArr) {
+      container.innerHTML = '';
+      orderArr.forEach(n => container.appendChild(tile(n)));
+    }
+    fillGrid(home, CONFIG.homeOrder);
+    fillGrid(dock, CONFIG.dockOrder);
+    fillGrid(drawer, CONFIG.drawerOrder);
+
+    // Drawer & panel toggles
     drawerBtn.addEventListener('click', () => drawer.classList.toggle('open'));
-    notifPull.addEventListener('click', () => panel.classList.toggle('open'));
-
-    // Touch gestures (simple)
     let startY = null;
-    const phone = document.getElementById('phone');
     phone.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, {passive:true});
-    phone.addEventListener('touchend', e => { startY = null; }, {passive:true});
+    phone.addEventListener('touchend', () => { startY = null; }, {passive:true});
     phone.addEventListener('touchmove', e => {
       if (startY == null) return;
       const dy = e.touches[0].clientY - startY;
       if (dy > 50) { panel.classList.add('open'); drawer.classList.remove('open'); } // swipe down
       if (dy < -50) { drawer.classList.add('open'); panel.classList.remove('open'); } // swipe up
     }, {passive:true});
+    // Mouse shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { panel.classList.remove('open'); drawer.classList.remove('open'); }
+      if (e.key === ' ') { drawer.classList.toggle('open'); }
+      if (e.key.toLowerCase() === 'n') { panel.classList.toggle('open'); }
+    });
 
-    // Brightness (wallpaper filter)
-    const wp = document.querySelector('.wallpaper');
+    // Brightness slider
     document.getElementById('brightness').addEventListener('input', e => {
       const v = e.target.value;
-      wp.style.filter = `contrast(${v/100*105}%) saturate(${v/100*115}%)`;
+      wallpaper.style.filter = `brightness(${v}%) contrast(105%) saturate(115%)`;
     });
 
-    // Simple toggles
-    document.querySelectorAll('[data-toggle]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const on = btn.textContent.includes('تشغيل');
-        btn.textContent = on ? 'إيقاف' : 'تشغيل';
-        btn.style.background = on ? 'rgba(40,199,111,0.5)' : 'rgba(255,255,255,0.08)';
-      });
-    });
-
-    // Open fake app windows
-    const win = document.getElementById('win');
-    const winTitle = document.getElementById('winTitle');
-    const winBody = document.getElementById('winBody');
-    document.querySelectorAll('.app').forEach(el => {
-      el.addEventListener('click', (ev) => {
-        ripple(ev);
-        const name = el.dataset.app || 'تطبيق';
-        winTitle.textContent = name;
-        winBody.innerHTML = getAppContent(name);
-        win.classList.add('show');
-        drawer.classList.remove('open');
-        panel.classList.remove('open');
-      });
-    });
+    // Open fake app window
+    function openApp(ev) {
+      ripple(ev);
+      const name = ev.currentTarget.dataset.app || 'تطبيق';
+      winTitle.textContent = name;
+      winBody.innerHTML = getAppContent(name);
+      win.classList.add('show');
+      drawer.classList.remove('open');
+      panel.classList.remove('open');
+    }
     document.getElementById('homeBtn').addEventListener('click', () => win.classList.remove('show'));
     document.getElementById('backBtn').addEventListener('click', () => win.classList.remove('show'));
 
@@ -289,7 +334,9 @@
         'الطقس': 'طقس تجريبي بأرقام ثابتة.',
         'الموسيقى': 'مشغل بسيط لأصوات تجريبية.',
         'الملفات': 'مدير ملفات وهمي.',
-        'الحاسبة': '<input id="calc" placeholder="3+4*2" style="width:100%;padding:10px;border-radius:10px;background:rgba(255,255,255,0.06);color:#fff"><div id="calcOut" style="margin-top:10px"></div>'
+        'الحاسبة': '<input id="calc" placeholder="3+4*2" style="width:100%;padding:10px;border-radius:10px;background:rgba(255,255,255,0.06);color:#fff"><div id="calcOut" style="margin-top:10px"></div>',
+        'متجر التطبيقات': 'سوق وهمي لعرض تطبيقاتك التجريبية.',
+        'مدير الهاتف': 'تنظيف ملفات مؤقتة، إدارة تطبيقات — محاكاة.'
       };
       setTimeout(() => {
         const inp = document.getElementById('calc');
@@ -305,7 +352,7 @@
       return map[name] || 'تطبيق تجريبي.';
     }
 
-    // Tap ripple effect
+    // Ripple
     function ripple(e) {
       const r = document.createElement('span');
       r.className = 'ripple';
@@ -315,12 +362,66 @@
       setTimeout(() => r.remove(), 500);
     }
 
-    // Keyboard shortcuts for desktop
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') { panel.classList.remove('open'); drawer.classList.remove('open'); }
-      if (e.key === ' ') { drawer.classList.toggle('open'); }
-      if (e.key.toLowerCase() === 'n') { panel.classList.toggle('open'); }
-    });
+    /* =======================
+       3) PWA — Manifest & SW في نفس الملف
+       ======================= */
+    // Create manifest as Blob and attach <link rel="manifest">
+    const manifest = {
+      name: CONFIG.name,
+      short_name: CONFIG.short_name,
+      start_url: "./index.html",
+      display: "standalone",
+      background_color: CONFIG.background_color,
+      theme_color: CONFIG.theme_color,
+      icons: CONFIG.pwaIconURL ? [{
+        src: CONFIG.pwaIconURL,
+        sizes: "192x192",
+        type: "image/png"
+      }, {
+        src: CONFIG.pwaIconURL,
+        sizes: "512x512",
+        type: "image/png"
+      }] : []
+    };
+    const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
+    const manifestURL = URL.createObjectURL(manifestBlob);
+    const linkManifest = document.createElement('link');
+    linkManifest.rel = 'manifest';
+    linkManifest.href = manifestURL;
+    document.head.appendChild(linkManifest);
+
+    // Inline Service Worker via Blob (cache basic shell)
+    const swCode = `
+      const CACHE = 'oppo-sim-v1';
+      const ASSETS = ['.', './index.html'];
+      self.addEventListener('install', e => {
+        e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+      });
+      self.addEventListener('activate', e => {
+        e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => k !== CACHE && caches.delete(k)))));
+        self.clients.claim();
+      });
+      self.addEventListener('fetch', e => {
+        const url = new URL(e.request.url);
+        if (e.request.method === 'GET') {
+          e.respondWith(
+            caches.match(e.request).then(res => res || fetch(e.request).then(net => {
+              // Cache same-origin requests
+              if (url.origin === self.location.origin) {
+                const clone = net.clone();
+                caches.open(CACHE).then(c => c.put(e.request, clone));
+              }
+              return net;
+            }).catch(() => caches.match('./index.html')))
+          );
+        }
+      });
+    `;
+    const swBlob = new Blob([swCode], {type: 'application/javascript'});
+    const swURL = URL.createObjectURL(swBlob);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register(swURL);
+    }
   </script>
 </body>
 </html>
